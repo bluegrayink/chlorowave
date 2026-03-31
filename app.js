@@ -26,11 +26,23 @@ function sendRequest() {
 
 // 3. Ambil List Lagu dari Folder Google Drive
 async function fetchSongsFromDrive() {
-    const response = await fetch('https://www.googleapis.com/drive/v3/files?q=mimeType="audio/mpeg"', {
-        headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    const data = await response.json();
-    renderPlaylist(data.files);
+    console.log("Mulai mengambil lagu dengan token:", accessToken); // Tambahkan ini
+    try {
+        const response = await fetch('https://www.googleapis.com/drive/v3/files?q=mimeType="audio/mpeg"&fields=files(id, name)', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const data = await response.json();
+        console.log("Data dari Google Drive:", data); // Lihat hasilnya di console nanti
+
+        if (data.files && data.files.length > 0) {
+            renderPlaylist(data.files);
+        } else {
+            console.log("Tidak ada file MP3 ditemukan di Drive.");
+            playlistUI.innerHTML = "<li>Gagal menemukan lagu. Pastikan ada file MP3 di Drive Anda.</li>";
+        }
+    } catch (err) {
+        console.error("Error saat fetch lagu:", err);
+    }
 }
 
 function renderPlaylist(files) {
