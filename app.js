@@ -5,7 +5,7 @@ const audioPlayer = document.getElementById('audio-player');
 // 1. Inisialisasi Google Login
 document.getElementById('login-btn').addEventListener('click', () => {
     const client = google.accounts.oauth2.initTokenClient({
-        client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+        client_id: '56742945749-gm2otrtbtqilaquo4rt54hk59v80ld1h.apps.googleusercontent.com',
         scope: 'https://www.googleapis.com/auth/drive.file', // Hanya akses file yang dibuat aplikasi ini
         callback: (response) => {
             accessToken = response.access_token;
