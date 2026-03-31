@@ -55,18 +55,39 @@ function renderPlaylist(files) {
 }
 
 // 4. Putar Musik Langsung dari GDrive
-function playSong(fileId, fileName) {
-    document.getElementById('current-song').innerText = fileName;
-    // URL streaming langsung dari Google Drive
-    audioPlayer.src = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&access_token=${accessToken}`;
-    audioPlayer.play();
+async function playSong(fileId, fileName) {
+    const currentSongEl = document.getElementById('current-song');
+    currentSongEl.innerText = "Memuat: " + fileName + "...";
 
-    // Media Session API untuk Background Running & Control Lockscreen
-    if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-            title: fileName,
-            artist: 'CloudMusic User',
-            album: 'My Private Collection'
+    try {
+        // Mengambil data lagu dengan Auth Header agar tidak diblokir Google
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
         });
+
+        if (!response.ok) throw new Error("Gagal mengambil file");
+
+        // Mengubah data mentah menjadi Blob URL
+        const blob = await response.blob();
+        const musicUrl = URL.createObjectURL(blob);
+
+        // Pasang ke player dan putar
+        audioPlayer.src = musicUrl;
+        audioPlayer.play();
+        
+        currentSongEl.innerText = fileName;
+
+        // Agar kontrol di lockscreen HP muncul
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: fileName,
+                artist: 'CloudMusic Premium',
+                album: 'My Google Drive'
+            });
+        }
+    } catch (err) {
+        console.error("Gagal putar lagu:", err);
+        alert("Gagal memutar lagu. Coba login ulang atau cek koneksi.");
+        currentSongEl.innerText = "Gagal memutar lagu.";
     }
 }
