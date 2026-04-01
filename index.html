@@ -11,10 +11,16 @@
     <div id="app">
         <header>
             <h1>ChloroWave <span>MP3 Player</span></h1>
-            
+           <button id="login-btn">Login Google Drive</button> 
         </header>
 
-        
+        <section id="request-section">
+‎            <h3>Request Lagu Baru (Proses 1x24 Jam)</h3>
+‎            <div class="input-group">
+‎                <input type="text" id="song-request" placeholder="Contoh: Tulus - Hati Hati di Jalan">
+‎                <button onclick="sendRequest()">Kirim</button>
+‎            </div>
+‎        </section>
 
         <section id="player-section">
             <div id="current-song">Memilih lagu...</div>
