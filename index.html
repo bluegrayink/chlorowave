@@ -90,9 +90,12 @@
             <form id="reg-form" class="reg-form">
                 <div class="field-group">
                     <label for="f-email">Email Gmail</label>
-                    <input type="email" id="f-email" placeholder="namakamu@gmail.com" required
-                           pattern=".*@gmail\.com$" title="Harus menggunakan email @gmail.com">
-                    <span class="field-hint">Harus Gmail — ini yang akan dipakai untuk login</span>
+                    <div class="email-input-wrap">
+                        <input type="text" id="f-email" placeholder="namakamu" required
+                               autocomplete="username" autocapitalize="none" spellcheck="false">
+                        <span class="email-suffix">@gmail.com</span>
+                    </div>
+                    <span class="field-hint">Ini yang akan dipakai untuk login</span>
                 </div>
 
                 <div class="field-group">
