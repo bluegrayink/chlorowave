@@ -1,203 +1,416 @@
-let accessToken = null;
-const playlistUI = document.getElementById('playlist-ui');
-const audioPlayer = document.getElementById('audio-player');
+// ============================================================
+//  CHLOROWAVE — app.js
+//  KONFIGURASI: Isi 3 konstanta di bawah sebelum deploy
+// ============================================================
 
-// --- LOGIKA AKTIVASI & MODAL ---
+const CONFIG = {
+    // 1. Client ID Google Cloud kamu (OAuth 2.0)
+    GOOGLE_CLIENT_ID: '56742945749-gm2otrtbtqilaquo4rt54hk59v80ld1h.apps.googleusercontent.com',
 
-// Fungsi buka modal
-function openModal() {
-    document.getElementById('activation-modal').classList.remove('hidden');
-}
+    // 2. URL Google Apps Script Web App (deploy sebagai web app, akses "Anyone")
+    //    Lihat file gas-script.js untuk cara deploy
+    GAS_ENDPOINT: 'https://script.google.com/macros/s/GANTI_DENGAN_ID_DEPLOYMENT_KAMU/exec',
 
-// Fungsi tutup modal
-function closeModal() {
-    document.getElementById('activation-modal').classList.add('hidden');
-}
+    // 3. URL Google Form untuk pendaftaran
+    //    Format: https://docs.google.com/forms/d/e/FORM_ID/formResponse
+    //    Ganti FORM_ID dengan ID form kamu, dan sesuaikan entry.XXXXXXX di bawah
+    FORM_ENDPOINT: 'https://docs.google.com/forms/d/e/GANTI_DENGAN_FORM_ID_KAMU/formResponse',
 
-// Handle Form Aktivasi saat disubmit
-document.getElementById('activation-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    // 1. Ambil data dari form
-    const userData = {
-        email: document.getElementById('user-email').value,
-        shareLink: document.getElementById('share-link').value,
-        payment: document.getElementById('pay-note').value,
-        timestamp: new Date().toLocaleString()
-    };
-
-    // 2. Tampilkan di console (Bisa kamu copy-paste untuk rekap)
-    console.log("=== DATA PENDAFTAR BARU ===");
-    console.log("Email:", userData.email);
-    console.log("Link Share:", userData.shareLink);
-    console.log("Catatan:", userData.payment);
-    console.log("Waktu:", userData.timestamp);
-    console.log("===========================");
-
-    // 3. Simpan status "Pending" di browser user
-    localStorage.setItem('chlorowave_status', 'pending');
-    
-    // 4. Tutup modal dan ganti dengan pesan sukses manual
-    closeModal();
-    
-    // Tampilan pesan untuk user
-    alert(
-        "Data pendaftaran telah diterima!\n\n" +
-        "Tim kami akan memverifikasi pembayaran & link share Anda.\n" +
-        "Akun akan aktif otomatis dalam 1x24 jam.\n\n" +
-        "Terima kasih telah mendukung ChloroWave!"
-    );
-
-    // Update tampilan tombol login agar user tahu mereka sedang diproses
-    updateLoginButtonStatus();
-});
-
-// Fungsi untuk cek status tombol saat halaman di-load
-function updateLoginButtonStatus() {
-    const status = localStorage.getItem('chlorowave_status');
-    const loginBtn = document.getElementById('login-btn');
-
-    if (status === 'pending') {
-        loginBtn.innerText = "⏳ Verifikasi 1x24 Jam...";
-        loginBtn.style.backgroundColor = "#888"; // Ubah jadi abu-abu
-        loginBtn.disabled = true; // Matikan tombolnya
-        loginBtn.style.cursor = "not-allowed";
-    } else if (status === 'active') {
-        loginBtn.innerText = "Login Google Drive";
-        loginBtn.style.backgroundColor = "var(--primary-color)";
-        loginBtn.disabled = false;
+    // 4. Mapping field Google Form (klik kanan field di form preview > Inspect > cari "entry.XXXX")
+    FORM_FIELDS: {
+        email:    'entry.000000001',   // Ganti dengan entry ID field Email di form kamu
+        shareUrl: 'entry.000000002',   // Ganti dengan entry ID field Link Share
+        refNum:   'entry.000000003',   // Ganti dengan entry ID field Nomor Referensi
     }
-}
-
-// Tambahkan pemanggilan fungsi ini di paling bawah app.js atau saat window.onload
-window.onload = () => {
-    updateLoginButtonStatus();
 };
 
-// --- LOGIKA AUTH GOOGLE ---
+// ============================================================
+//  STATE GLOBAL
+// ============================================================
+let accessToken = null;
+let userEmail   = null;
+let playlist    = [];
+let currentIdx  = -1;
 
-// Tombol Login Utama
-document.getElementById('login-btn').addEventListener('click', () => {
-    // Cek apakah sudah aktivasi atau belum
-    if (localStorage.getItem('chlorowave_activated') === 'true') {
-        startGoogleLogin();
+// ============================================================
+//  SCREEN NAVIGATION
+// ============================================================
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+}
+
+// ============================================================
+//  INIT: Cek status saat halaman dibuka
+// ============================================================
+window.addEventListener('load', () => {
+    const status = localStorage.getItem('cw_status');
+    const email  = localStorage.getItem('cw_email');
+
+    if (status === 'pending' && email) {
+        document.getElementById('pending-email-display').textContent = email;
+        showScreen('screen-pending');
     } else {
-        openModal();
+        showScreen('screen-landing');
     }
 });
 
-function startGoogleLogin() {
+// ============================================================
+//  REGISTRASI — Submit Form ke Google Form
+// ============================================================
+document.getElementById('reg-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email    = document.getElementById('f-email').value.trim().toLowerCase();
+    const shareUrl = document.getElementById('f-share').value.trim();
+    const refNum   = document.getElementById('f-ref').value.trim();
+    const errEl    = document.getElementById('reg-error');
+    const btnText  = document.getElementById('reg-btn-text');
+    const btnLoad  = document.getElementById('reg-btn-loader');
+    const submitBtn = document.getElementById('reg-submit-btn');
+
+    // Validasi Gmail
+    if (!email.endsWith('@gmail.com')) {
+        showError(errEl, 'Harus menggunakan email @gmail.com');
+        return;
+    }
+
+    // Loading state
+    btnText.textContent = 'Mengirim...';
+    btnLoad.classList.remove('hidden');
+    submitBtn.disabled = true;
+    errEl.classList.add('hidden');
+
+    try {
+        // Kirim ke Google Form via fetch (no-cors karena Google Form tidak support CORS)
+        // Data tetap masuk ke Sheets meski response opaque
+        const formData = new FormData();
+        formData.append(CONFIG.FORM_FIELDS.email,    email);
+        formData.append(CONFIG.FORM_FIELDS.shareUrl, shareUrl);
+        formData.append(CONFIG.FORM_FIELDS.refNum,   refNum);
+
+        await fetch(CONFIG.FORM_ENDPOINT, {
+            method: 'POST',
+            mode: 'no-cors',  // Google Form tidak support CORS, tapi data tetap masuk
+            body: formData
+        });
+
+        // Simpan status pending di lokal
+        localStorage.setItem('cw_status', 'pending');
+        localStorage.setItem('cw_email',  email);
+
+        // Tampilkan screen pending
+        document.getElementById('pending-email-display').textContent = email;
+        showScreen('screen-pending');
+
+    } catch (err) {
+        // no-cors selalu resolve, tapi jaga-jaga kalau ada error jaringan
+        // Tetap anggap berhasil dan simpan pending (data kemungkinan sudah masuk)
+        console.error('Form submit error:', err);
+        localStorage.setItem('cw_status', 'pending');
+        localStorage.setItem('cw_email',  email);
+        document.getElementById('pending-email-display').textContent = email;
+        showScreen('screen-pending');
+    } finally {
+        btnText.textContent = 'Kirim Pendaftaran';
+        btnLoad.classList.add('hidden');
+        submitBtn.disabled = false;
+    }
+});
+
+function showError(el, msg) {
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+
+// ============================================================
+//  LOGIN — Google OAuth + Whitelist Check
+// ============================================================
+function tryLogin() {
+    // Cek Google Identity Services sudah load
+    if (typeof google === 'undefined') {
+        alert('Koneksi internet diperlukan untuk login. Coba muat ulang halaman.');
+        return;
+    }
+
     const client = google.accounts.oauth2.initTokenClient({
-        client_id: '56742945749-gm2otrtbtqilaquo4rt54hk59v80ld1h.apps.googleusercontent.com',
-        scope: 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+        client_id: CONFIG.GOOGLE_CLIENT_ID,
+        scope: [
+            'https://www.googleapis.com/auth/drive.readonly',
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email'
+        ].join(' '),
         callback: async (response) => {
-            accessToken = response.access_token;
-            if (accessToken) {
-                await fetchUserInfo();
-                fetchSongsFromDrive();
-                showUserProfileUI();
+            if (response.error) {
+                console.error('OAuth error:', response.error);
+                return;
             }
+            accessToken = response.access_token;
+            await handlePostLogin();
         },
     });
+
     client.requestAccessToken();
 }
 
-async function fetchUserInfo() {
+async function handlePostLogin() {
     try {
-        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        // 1. Ambil info user dari Google
+        const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
             headers: { Authorization: `Bearer ${accessToken}` }
         });
         const user = await res.json();
-        const defaultName = user.email.split('@')[0];
-        
-        if (!localStorage.getItem('chlorowave_username')) {
-            localStorage.setItem('chlorowave_username', defaultName);
+        userEmail  = user.email;
+
+        // 2. Cek whitelist via Google Apps Script
+        const isWhitelisted = await checkWhitelist(userEmail);
+
+        if (isWhitelisted) {
+            // Akun aktif — masuk ke app
+            onLoginSuccess(user);
+        } else {
+            // Tidak di whitelist — tampilkan modal denied
+            document.getElementById('denied-email').textContent = userEmail;
+            openModal('modal-denied');
+            accessToken = null;
+            userEmail   = null;
         }
-        updateUsernameUI();
+
     } catch (err) {
-        console.error("Gagal ambil info user:", err);
+        console.error('Login error:', err);
+        alert('Terjadi kesalahan saat login. Coba lagi.');
     }
 }
 
-function updateUsernameUI() {
-    const savedName = localStorage.getItem('chlorowave_username') || "User";
-    document.getElementById('username-display').innerText = "👤 " + savedName;
+async function checkWhitelist(email) {
+    try {
+        const url = `${CONFIG.GAS_ENDPOINT}?action=checkWhitelist&email=${encodeURIComponent(email)}`;
+        const res  = await fetch(url);
+        const data = await res.json();
+        return data.active === true;
+    } catch (err) {
+        console.error('Whitelist check error:', err);
+        // Jika GAS endpoint gagal (belum dikonfigurasi), tolak akses
+        return false;
+    }
 }
 
-function showUserProfileUI() {
-    document.getElementById('login-btn').classList.add('hidden');
-    document.getElementById('user-profile').classList.remove('hidden');
+function onLoginSuccess(user) {
+    // Set username dari lokal atau gunakan nama Google
+    if (!localStorage.getItem('cw_username')) {
+        const name = user.given_name || user.email.split('@')[0];
+        localStorage.setItem('cw_username', name);
+    }
+
+    // Update status jadi active
+    localStorage.setItem('cw_status', 'active');
+    localStorage.setItem('cw_email',  userEmail);
+
+    // Tampilkan app
+    updateUsernameUI();
+    showScreen('screen-app');
+    fetchSongsFromDrive();
+}
+
+// ============================================================
+//  USER PROFILE & MENU
+// ============================================================
+function updateUsernameUI() {
+    const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
+    document.getElementById('username-display').textContent = '👤 ' + name;
 }
 
 function toggleUserMenu() {
     document.getElementById('user-menu').classList.toggle('hidden');
 }
 
+// Tutup user menu saat klik di luar
+document.addEventListener('click', (e) => {
+    const menu    = document.getElementById('user-menu');
+    const profile = document.getElementById('user-profile');
+    if (menu && !profile.contains(e.target)) {
+        menu.classList.add('hidden');
+    }
+});
+
 function saveUsername() {
-    const newName = document.getElementById('edit-username-input').value;
-    if (newName.trim() !== "") {
-        localStorage.setItem('chlorowave_username', newName);
+    const val = document.getElementById('edit-username-input').value.trim();
+    if (val) {
+        localStorage.setItem('cw_username', val);
         updateUsernameUI();
-        document.getElementById('edit-username-input').value = "";
-        toggleUserMenu();
+        document.getElementById('edit-username-input').value = '';
+        document.getElementById('user-menu').classList.add('hidden');
     }
 }
 
 function logout() {
-    if (confirm("Logout dan reset aktivasi?")) {
+    if (confirm('Yakin mau logout?')) {
         accessToken = null;
-        localStorage.clear(); // Hapus status aktivasi & username
-        location.reload();
+        userEmail   = null;
+        playlist    = [];
+        currentIdx  = -1;
+        // Hapus sesi tapi pertahankan status & username
+        showScreen('screen-landing');
     }
 }
 
-// --- LOGIKA DRIVE & PLAYER ---
+function resetPending() {
+    if (confirm('Data pendaftaran sebelumnya akan dihapus. Lanjut?')) {
+        localStorage.removeItem('cw_status');
+        localStorage.removeItem('cw_email');
+        showScreen('screen-register');
+    }
+}
 
+// ============================================================
+//  MODAL HELPERS
+// ============================================================
+function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
+// ============================================================
+//  GOOGLE DRIVE — Fetch & Render Playlist
+// ============================================================
 async function fetchSongsFromDrive() {
+    const listEl = document.getElementById('playlist-ui');
+    listEl.innerHTML = '<li class="playlist-loading">Memuat lagu...</li>';
+
     try {
-        const response = await fetch('https://www.googleapis.com/drive/v3/files?q=mimeType="audio/mpeg"&fields=files(id, name)', {
+        // Ambil semua file audio dari Drive (mp3, flac, m4a, ogg, wav)
+        const mimeTypes = [
+            'audio/mpeg',
+            'audio/flac',
+            'audio/mp4',
+            'audio/ogg',
+            'audio/wav',
+            'audio/x-wav',
+        ].map(m => `mimeType="${m}"`).join(' or ');
+
+        const query    = encodeURIComponent(mimeTypes);
+        const fields   = 'files(id,name,mimeType,size)';
+        const url      = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=${fields}&pageSize=200&orderBy=name`;
+
+        const res  = await fetch(url, {
             headers: { Authorization: `Bearer ${accessToken}` }
         });
-        const data = await response.json();
-        if (data.files && data.files.length > 0) {
-            renderPlaylist(data.files);
-        } else {
-            playlistUI.innerHTML = "<li>Folder Drive kosong. Silakan upload MP3 dulu.</li>";
+        const data = await res.json();
+
+        if (data.error) {
+            throw new Error(data.error.message);
         }
+
+        if (!data.files || data.files.length === 0) {
+            listEl.innerHTML = '<li class="playlist-empty">Drive kosong. Upload MP3 ke Google Drive kamu dulu.</li>';
+            return;
+        }
+
+        playlist = data.files;
+        document.getElementById('song-count').textContent = `${playlist.length} lagu`;
+        renderPlaylist();
+
     } catch (err) {
-        console.error("Error fetch lagu:", err);
+        console.error('Drive fetch error:', err);
+        listEl.innerHTML = `<li class="playlist-error">Gagal memuat: ${err.message}</li>`;
     }
 }
 
-function renderPlaylist(files) {
-    playlistUI.innerHTML = files.map(file => `
-        <li>
-            <span onclick="playSong('${file.id}', '${file.name}')">🎵 ${file.name}</span>
+function renderPlaylist() {
+    const listEl = document.getElementById('playlist-ui');
+    listEl.innerHTML = playlist.map((file, idx) => `
+        <li id="track-${idx}" onclick="playSong(${idx})">
+            <span class="track-icon">♪</span>
+            <span class="track-name">${sanitize(file.name.replace(/\.[^.]+$/, ''))}</span>
         </li>
     `).join('');
 }
 
-async function playSong(fileId, fileName) {
-    const currentSongEl = document.getElementById('current-song');
-    currentSongEl.innerText = "Memuat: " + fileName;
+function sanitize(str) {
+    return str.replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============================================================
+//  PLAYER — Play, Prev, Next
+// ============================================================
+async function playSong(idx) {
+    if (idx < 0 || idx >= playlist.length) return;
+
+    currentIdx = idx;
+    const file = playlist[idx];
+    const songEl = document.getElementById('current-song');
+    const player = document.getElementById('audio-player');
+
+    // Update UI aktif
+    document.querySelectorAll('#playlist-ui li').forEach(li => li.classList.remove('active'));
+    const trackEl = document.getElementById(`track-${idx}`);
+    if (trackEl) {
+        trackEl.classList.add('active');
+        trackEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    songEl.textContent = '⏳ Memuat: ' + file.name.replace(/\.[^.]+$/, '');
 
     try {
-        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+        // Stream langsung via blob untuk kompatibilitas luas
+        const res  = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
             headers: { Authorization: `Bearer ${accessToken}` }
         });
-        const blob = await response.blob();
-        audioPlayer.src = URL.createObjectURL(blob);
-        audioPlayer.play();
-        currentSongEl.innerText = fileName;
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const blob = await res.blob();
+        const prev = player.src;
+
+        player.src = URL.createObjectURL(blob);
+        player.play();
+        songEl.textContent = '▶ ' + file.name.replace(/\.[^.]+$/, '');
+
+        // Bebaskan URL lama dari memory
+        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+
     } catch (err) {
-        console.error("Gagal putar:", err);
+        console.error('Playback error:', err);
+        songEl.textContent = '⚠ Gagal memutar: ' + file.name;
     }
 }
 
+function prevSong() {
+    if (playlist.length === 0) return;
+    const idx = currentIdx <= 0 ? playlist.length - 1 : currentIdx - 1;
+    playSong(idx);
+}
+
+function nextSong() {
+    if (playlist.length === 0) return;
+    const idx = currentIdx >= playlist.length - 1 ? 0 : currentIdx + 1;
+    playSong(idx);
+}
+
+// Auto-next saat lagu habis
+document.getElementById('audio-player').addEventListener('ended', () => {
+    nextSong();
+});
+
+// ============================================================
+//  REQUEST LAGU
+// ============================================================
 function sendRequest() {
-    const song = document.getElementById('song-request').value;
-    if (song) {
-        alert(`Request "${song}" sudah masuk antrean!`);
-        document.getElementById('song-request').value = "";
+    const input = document.getElementById('song-request');
+    const song  = input.value.trim();
+    if (!song) return;
+
+    // Kirim request ke GAS (jika sudah dikonfigurasi)
+    if (CONFIG.GAS_ENDPOINT.includes('GANTI')) {
+        alert(`Request "${song}" dicatat! Admin akan menambahkan dalam 1×24 jam.`);
+    } else {
+        fetch(`${CONFIG.GAS_ENDPOINT}?action=songRequest&song=${encodeURIComponent(song)}&email=${encodeURIComponent(userEmail || '')}`)
+            .catch(() => {}); // Fire and forget
+        alert(`Request "${song}" terkirim! ✅`);
     }
+
+    input.value = '';
 }
