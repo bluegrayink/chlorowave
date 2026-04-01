@@ -10,38 +10,38 @@
 <body>
     <div id="app">
         <header>
-    <h1>ChloroWave <span>MP3 Player</span></h1>
-    <div id="auth-section">
-        <button id="login-btn">Login Google Drive</button>
-        
-        <div id="user-profile" class="hidden">
-            <div class="user-info" onclick="toggleUserMenu()">
-                <span id="username-display">Loading...</span>
-                <span class="arrow-icon">▼</span>
-            </div>
-            
-            <div id="user-menu" class="hidden">
-                <div class="menu-item">
-                    <label>Edit Nama:</label>
-                    <div class="input-row">
-                        <input type="text" id="edit-username-input" placeholder="Nama baru...">
-                        <button onclick="saveUsername()">Update</button>
+            <h1><span>ChloroWave</span> MP3 Player</h1>
+            <div id="auth-section">
+                <button id="login-btn">Login</button>
+                
+                <div id="user-profile" class="hidden">
+                    <div class="user-info" onclick="toggleUserMenu()">
+                        <span id="username-display">Loading...</span>
+                        <span class="arrow-icon">▼</span>
+                    </div>
+                    
+                    <div id="user-menu" class="hidden">
+                        <div class="menu-item">
+                            <label>Edit Nama:</label>
+                            <div class="input-row">
+                                <input type="text" id="edit-username-input" placeholder="Nama baru...">
+                                <button onclick="saveUsername()">Update</button>
+                            </div>
+                        </div>
+                        <hr>
+                        <button class="logout-btn" onclick="logout()">Logout</button>
                     </div>
                 </div>
-                <hr>
-                <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
-        </div>
-    </div>
-</header>
+        </header>
 
         <section id="request-section">
-‎            <h3>Request Lagu Baru (Proses 1x24 Jam)</h3>
-‎            <div class="input-group">
-‎                <input type="text" id="song-request" placeholder="Contoh: Tulus - Hati Hati di Jalan">
-‎                <button onclick="sendRequest()">Kirim</button>
-‎            </div>
-‎        </section>
+            <h3>Request Lagu Baru (Proses 1x24 Jam)</h3>
+            <div class="input-group">
+                <input type="text" id="song-request" placeholder="Contoh: Tulus - Hati Hati di Jalan">
+                <button onclick="sendRequest()">Kirim</button>
+            </div>
+        </section>
 
         <section id="player-section">
             <div id="current-song">Memilih lagu...</div>
@@ -55,9 +55,39 @@
 
         <section id="playlist-section">
             <h3>Playlist Saya (Ready in Drive)</h3>
-            <ul id="playlist-ui">
-                </ul>
+            <ul id="playlist-ui"></ul>
         </section>
+    </div>
+
+    <div id="activation-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Aktivasi ChloroWave</h2>
+            <p>Lengkapi data untuk mengaktifkan akun Premium Anda</p>
+            
+            <form id="activation-form">
+                <div class="form-group">
+                    <label>Email Gmail</label>
+                    <input type="email" id="user-email" placeholder="contoh@gmail.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Link Share Thread / Sosmed</label>
+                    <input type="url" id="share-link" placeholder="https://threads.net/..." required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Nominal Bayar Serelanya</label>
+                    <input type="text" id="pay-note" placeholder="Contoh: 20rb (Sudah via QRIS)" required>
+                </div>
+
+                <div class="payment-instructions">
+                    <p>Silakan transfer ke <strong>QRIS/DANA: 0812xxxx</strong></p>
+                </div>
+
+                <button type="submit" class="btn-activate">Kirim & Aktivasi Akun</button>
+                <button type="button" class="btn-close" onclick="closeModal()">Nanti Saja</button>
+            </form>
+        </div>
     </div>
 
     <script src="https://accounts.google.com/gsi/client" async defer></script>
