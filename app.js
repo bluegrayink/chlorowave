@@ -18,24 +18,61 @@ function closeModal() {
 document.getElementById('activation-form').addEventListener('submit', (e) => {
     e.preventDefault();
     
-    // Ambil data (Bisa kamu kembangkan untuk kirim ke database/email nanti)
+    // 1. Ambil data dari form
     const userData = {
         email: document.getElementById('user-email').value,
         shareLink: document.getElementById('share-link').value,
-        payment: document.getElementById('pay-note').value
+        payment: document.getElementById('pay-note').value,
+        timestamp: new Date().toLocaleString()
     };
 
-    console.log("User teraktivasi:", userData);
+    // 2. Tampilkan di console (Bisa kamu copy-paste untuk rekap)
+    console.log("=== DATA PENDAFTAR BARU ===");
+    console.log("Email:", userData.email);
+    console.log("Link Share:", userData.shareLink);
+    console.log("Catatan:", userData.payment);
+    console.log("Waktu:", userData.timestamp);
+    console.log("===========================");
 
-    // Simpan status di browser agar tidak muncul lagi modalnya
-    localStorage.setItem('chlorowave_activated', 'true');
+    // 3. Simpan status "Pending" di browser user
+    localStorage.setItem('chlorowave_status', 'pending');
     
+    // 4. Tutup modal dan ganti dengan pesan sukses manual
     closeModal();
-    alert("Aktivasi Berhasil! Sekarang hubungkan ke Google Drive Anda.");
     
-    // Langsung pancing login Google setelah klik submit
-    startGoogleLogin();
+    // Tampilan pesan untuk user
+    alert(
+        "Data pendaftaran telah diterima!\n\n" +
+        "Tim kami akan memverifikasi pembayaran & link share Anda.\n" +
+        "Akun akan aktif otomatis dalam 1x24 jam.\n\n" +
+        "Terima kasih telah mendukung ChloroWave!"
+    );
+
+    // Update tampilan tombol login agar user tahu mereka sedang diproses
+    updateLoginButtonStatus();
 });
+
+// Fungsi untuk cek status tombol saat halaman di-load
+function updateLoginButtonStatus() {
+    const status = localStorage.getItem('chlorowave_status');
+    const loginBtn = document.getElementById('login-btn');
+
+    if (status === 'pending') {
+        loginBtn.innerText = "⏳ Verifikasi 1x24 Jam...";
+        loginBtn.style.backgroundColor = "#888"; // Ubah jadi abu-abu
+        loginBtn.disabled = true; // Matikan tombolnya
+        loginBtn.style.cursor = "not-allowed";
+    } else if (status === 'active') {
+        loginBtn.innerText = "Login Google Drive";
+        loginBtn.style.backgroundColor = "var(--primary-color)";
+        loginBtn.disabled = false;
+    }
+}
+
+// Tambahkan pemanggilan fungsi ini di paling bawah app.js atau saat window.onload
+window.onload = () => {
+    updateLoginButtonStatus();
+};
 
 // --- LOGIKA AUTH GOOGLE ---
 
