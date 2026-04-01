@@ -9,7 +9,7 @@ const CONFIG = {
 
     // 2. URL Google Apps Script Web App (deploy sebagai web app, akses "Anyone")
     //    Lihat file gas-script.js untuk cara deploy
-    GAS_ENDPOINT: 'https://script.google.com/macros/s/GANTI_DENGAN_ID_DEPLOYMENT_KAMU/exec',
+    GAS_ENDPOINT: 'https://script.google.com/macros/s/AKfycbwMVqqsmDeX23TEbo35VwhnFqpUbOu5a09C_ilB0BDPTOIGlarGik4A-xE3_6nKNEkefQ/exec',
 
     // 3. URL Google Form untuk pendaftaran
     //    Format: https://docs.google.com/forms/d/e/FORM_ID/formResponse
