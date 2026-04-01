@@ -10,9 +10,30 @@
 <body>
     <div id="app">
         <header>
-            <h1>ChloroWave <span>MP3 Player</span></h1>
-           <button id="login-btn">Login Google Drive</button> 
-        </header>
+    <h1>ChloroWave <span>MP3 Player</span></h1>
+    <div id="auth-section">
+        <button id="login-btn">Login Google Drive</button>
+        
+        <div id="user-profile" class="hidden">
+            <div class="user-info" onclick="toggleUserMenu()">
+                <span id="username-display">Loading...</span>
+                <span class="arrow-icon">▼</span>
+            </div>
+            
+            <div id="user-menu" class="hidden">
+                <div class="menu-item">
+                    <label>Edit Nama:</label>
+                    <div class="input-row">
+                        <input type="text" id="edit-username-input" placeholder="Nama baru...">
+                        <button onclick="saveUsername()">Update</button>
+                    </div>
+                </div>
+                <hr>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+</header>
 
         <section id="request-section">
 ‎            <h3>Request Lagu Baru (Proses 1x24 Jam)</h3>
