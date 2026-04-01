@@ -61,17 +61,18 @@ window.addEventListener('load', () => {
 document.getElementById('reg-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const email    = document.getElementById('f-email').value.trim().toLowerCase();
-    const shareUrl = document.getElementById('f-share').value.trim();
-    const refNum   = document.getElementById('f-ref').value.trim();
     const errEl    = document.getElementById('reg-error');
     const btnText  = document.getElementById('reg-btn-text');
     const btnLoad  = document.getElementById('reg-btn-loader');
     const submitBtn = document.getElementById('reg-submit-btn');
 
-    // Validasi Gmail
-    if (!email.endsWith('@gmail.com')) {
-        showError(errEl, 'Harus menggunakan email @gmail.com');
+    const prefix   = document.getElementById('f-email').value.trim().toLowerCase().replace(/@.*/, '');
+    const email    = prefix + '@gmail.com';
+    const shareUrl = document.getElementById('f-share').value.trim();
+    const refNum   = document.getElementById('f-ref').value.trim();
+
+    if (!prefix) {
+        showError(errEl, 'Masukkan nama akun Gmail kamu');
         return;
     }
 
