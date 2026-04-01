@@ -14,13 +14,13 @@ const CONFIG = {
     // 3. URL Google Form untuk pendaftaran
     //    Format: https://docs.google.com/forms/d/e/FORM_ID/formResponse
     //    Ganti FORM_ID dengan ID form kamu, dan sesuaikan entry.XXXXXXX di bawah
-    FORM_ENDPOINT: 'https://docs.google.com/forms/d/e/GANTI_DENGAN_FORM_ID_KAMU/formResponse',
+    FORM_ENDPOINT: 'https://docs.google.com/forms/d/e/1YQOlH4HR5w1tSYwxoGy6ZR0v0B3VF2DoJZb_ekY_4zY/formResponse',
 
     // 4. Mapping field Google Form (klik kanan field di form preview > Inspect > cari "entry.XXXX")
     FORM_FIELDS: {
-        email:    'entry.000000001',   // Ganti dengan entry ID field Email di form kamu
-        shareUrl: 'entry.000000002',   // Ganti dengan entry ID field Link Share
-        refNum:   'entry.000000003',   // Ganti dengan entry ID field Nomor Referensi
+        email:    'entry.53353815',   // Ganti dengan entry ID field Email di form kamu
+        shareUrl: 'entry.244482656',   // Ganti dengan entry ID field Link Share
+        refNum:   'entry.1852014800',   // Ganti dengan entry ID field Nomor Referensi
     }
 };
 
