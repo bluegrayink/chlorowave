@@ -6,87 +6,225 @@
     <title>ChloroWave</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="app">
-        <header>
-            <h1>ChloroWave <span>MP3 Player</span></h1>
-            <div id="auth-section">
-                <button id="login-btn">Login</button>
-                
-                <div id="user-profile" class="hidden">
-                    <div class="user-info" onclick="toggleUserMenu()">
-                        <span id="username-display">Loading...</span>
-                        <span class="arrow-icon">▼</span>
-                    </div>
-                    
-                    <div id="user-menu" class="hidden">
-                        <div class="menu-item">
-                            <label>Edit Nama:</label>
-                            <div class="input-row">
-                                <input type="text" id="edit-username-input" placeholder="Nama baru...">
-                                <button onclick="saveUsername()">Update</button>
-                            </div>
-                        </div>
-                        <hr>
-                        <button class="logout-btn" onclick="logout()">Logout</button>
-                    </div>
+
+    <!-- ========================
+         SCREEN 1: LANDING
+         Tampil jika belum punya status apapun
+    ======================== -->
+    <div id="screen-landing" class="screen">
+        <div class="landing-bg">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+        </div>
+        <div class="landing-content">
+            <div class="logo-wrap">
+                <div class="logo-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <path d="M4 16C4 9.373 9.373 4 16 4s12 5.373 12 12-5.373 12-12 12S4 22.627 4 16z" fill="#1DB954" opacity="0.15"/>
+                        <path d="M8 16c0 4.418 3.582 8 8 8" stroke="#1DB954" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M11 16c0 2.761 2.239 5 5 5" stroke="#1DB954" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M14 16c0 1.105.895 2 2 2" stroke="#1DB954" stroke-width="1.5" stroke-linecap="round"/>
+                        <circle cx="16" cy="16" r="1.5" fill="#1DB954"/>
+                        <path d="M24 16c0-4.418-3.582-8-8-8" stroke="#1DB954" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+                        <path d="M21 16c0-2.761-2.239-5-5-5" stroke="#1DB954" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="logo-name">ChloroWave</h1>
+                    <p class="logo-sub">MP3 Player Pribadi</p>
                 </div>
             </div>
-        </header>
 
-        <section id="request-section">
-            <h3>Request Lagu Baru (Proses 1x24 Jam)</h3>
-            <div class="input-group">
-                <input type="text" id="song-request" placeholder="Contoh: Tulus - Hati Hati di Jalan">
-                <button onclick="sendRequest()">Kirim</button>
+            <div class="hero-text">
+                <h2>Musik dari Google Drive<br>kamu, langsung diputar.</h2>
+                <p>Tidak ada iklan. Tidak ada biaya tersembunyi.<br>Cukup bayar serelanya untuk aktivasi.</p>
             </div>
-        </section>
 
-        <section id="player-section">
-            <div id="current-song">Memilih lagu...</div>
-            <audio id="audio-player" controls></audio>
-            
-            <div class="controls">
-                <button onclick="prev()">⏮</button>
-                <button onclick="next()">⏭</button>
+            <div class="landing-features">
+                <div class="feature-pill">🎵 Streaming dari Drive pribadi</div>
+                <div class="feature-pill">🔒 Login aman via Google</div>
+                <div class="feature-pill">📱 Bisa install di HP</div>
             </div>
-        </section>
 
-        <section id="playlist-section">
-            <h3>Playlist Saya (Ready in Drive)</h3>
-            <ul id="playlist-ui"></ul>
-        </section>
+            <div class="landing-actions">
+                <button class="btn-primary" onclick="showScreen('screen-register')">Daftar Sekarang</button>
+                <button class="btn-ghost" onclick="tryLogin()">Sudah punya akun? Login</button>
+            </div>
+        </div>
     </div>
 
-    <div id="activation-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2>Aktivasi ChloroWave</h2>
-            <p>Lengkapi data untuk mengaktifkan akun Premium Anda</p>
-            
-            <form id="activation-form">
-                <div class="form-group">
-                    <label>Email Gmail</label>
-                    <input type="email" id="user-email" placeholder="contoh@gmail.com" required>
+    <!-- ========================
+         SCREEN 2: REGISTRASI
+         Form pendaftaran manual
+    ======================== -->
+    <div id="screen-register" class="screen hidden">
+        <div class="page-wrap">
+            <button class="btn-back" onclick="showScreen('screen-landing')">← Kembali</button>
+
+            <div class="form-header">
+                <div class="step-badge">Langkah 1 dari 2</div>
+                <h2>Aktivasi Akun</h2>
+                <p>Isi data di bawah untuk memulai proses verifikasi. Akun aktif dalam <strong>1×24 jam</strong>.</p>
+            </div>
+
+            <!-- Info Pembayaran -->
+            <div class="payment-card">
+                <div class="payment-card-label">Transfer ke</div>
+                <div class="payment-amount">Serelanya 🙏</div>
+                <div class="payment-methods">
+                    <span class="payment-badge">QRIS</span>
+                    <span class="payment-badge">DANA</span>
+                    <span class="payment-badge">Transfer Bank</span>
                 </div>
-                
-                <div class="form-group">
-                    <label>Link Share Thread / Sosmed</label>
-                    <input type="url" id="share-link" placeholder="https://threads.net/..." required>
+                <div class="payment-number">
+                    <!-- Ganti dengan nomor rekening/QRIS kamu -->
+                    DANA / QRIS: <strong>0812-XXXX-XXXX</strong>
                 </div>
-                
-                <div class="form-group">
-                    <label>Nominal Bayar Serelanya</label>
-                    <input type="text" id="pay-note" placeholder="Contoh: 20rb (Sudah via QRIS)" required>
+                <p class="payment-note">Setelah transfer, simpan nomor referensi transaksinya.</p>
+            </div>
+
+            <form id="reg-form" class="reg-form">
+                <div class="field-group">
+                    <label for="f-email">Email Gmail</label>
+                    <input type="email" id="f-email" placeholder="namakamu@gmail.com" required
+                           pattern=".*@gmail\.com$" title="Harus menggunakan email @gmail.com">
+                    <span class="field-hint">Harus Gmail — ini yang akan dipakai untuk login</span>
                 </div>
 
-                <div class="payment-instructions">
-                    <p>Silakan transfer ke <strong>QRIS/DANA: 0812xxxx</strong></p>
+                <div class="field-group">
+                    <label for="f-share">Link Share di Sosmed</label>
+                    <input type="url" id="f-share" placeholder="https://threads.net/p/..." required>
+                    <span class="field-hint">Share postingan tentang ChloroWave di Threads / IG / Twitter</span>
                 </div>
 
-                <button type="submit" class="btn-activate">Kirim & Aktivasi Akun</button>
-                <button type="button" class="btn-close" onclick="closeModal()">Nanti Saja</button>
+                <div class="field-group">
+                    <label for="f-ref">Nomor Referensi Transaksi</label>
+                    <input type="text" id="f-ref" placeholder="Contoh: TRF2024XXXXX atau No. ref QRIS" required>
+                    <span class="field-hint">Tertera di bukti transfer / riwayat transaksi kamu</span>
+                </div>
+
+                <div id="reg-error" class="error-msg hidden"></div>
+
+                <button type="submit" class="btn-primary full-width" id="reg-submit-btn">
+                    <span id="reg-btn-text">Kirim Pendaftaran</span>
+                    <span id="reg-btn-loader" class="btn-loader hidden">⏳</span>
+                </button>
             </form>
+        </div>
+    </div>
+
+    <!-- ========================
+         SCREEN 3: PENDING
+         Setelah form dikirim, menunggu verifikasi
+    ======================== -->
+    <div id="screen-pending" class="screen hidden">
+        <div class="page-wrap centered">
+            <div class="pending-icon">⏳</div>
+            <h2>Pendaftaran Diterima!</h2>
+            <p>Data kamu sedang diverifikasi oleh tim kami.</p>
+            <div class="pending-info-card">
+                <div class="pending-info-row">
+                    <span>Email</span>
+                    <strong id="pending-email-display">—</strong>
+                </div>
+                <div class="pending-info-row">
+                    <span>Status</span>
+                    <strong class="status-badge pending">Menunggu Verifikasi</strong>
+                </div>
+                <div class="pending-info-row">
+                    <span>Estimasi</span>
+                    <strong>1×24 jam</strong>
+                </div>
+            </div>
+            <p class="pending-note">Kami akan mengirim email ke Gmail kamu saat akun sudah aktif. Tidak perlu cek terus-menerus.</p>
+            <button class="btn-ghost" onclick="tryLogin()">Coba Login (jika sudah aktif)</button>
+            <button class="btn-link" onclick="resetPending()">Daftar dengan email lain</button>
+        </div>
+    </div>
+
+    <!-- ========================
+         SCREEN 4: MAIN APP
+         Tampil setelah login berhasil & email diverifikasi
+    ======================== -->
+    <div id="screen-app" class="screen hidden">
+        <div id="app">
+            <header>
+                <div class="header-logo">
+                    <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+                        <path d="M8 16c0 4.418 3.582 8 8 8" stroke="#1DB954" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M11 16c0 2.761 2.239 5 5 5" stroke="#1DB954" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M14 16c0 1.105.895 2 2 2" stroke="#1DB954" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="16" cy="16" r="1.5" fill="#1DB954"/>
+                        <path d="M24 16c0-4.418-3.582-8-8-8" stroke="#1DB954" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+                        <path d="M21 16c0-2.761-2.239-5-5-5" stroke="#1DB954" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+                    </svg>
+                    <span>ChloroWave</span>
+                </div>
+
+                <div id="auth-section">
+                    <div id="user-profile">
+                        <div class="user-info" onclick="toggleUserMenu()">
+                            <span id="username-display">Loading...</span>
+                            <span class="arrow-icon">▼</span>
+                        </div>
+                        <div id="user-menu" class="hidden">
+                            <div class="menu-item">
+                                <label>Edit Nama Tampilan:</label>
+                                <div class="input-row">
+                                    <input type="text" id="edit-username-input" placeholder="Nama baru...">
+                                    <button onclick="saveUsername()">Simpan</button>
+                                </div>
+                            </div>
+                            <hr>
+                            <button class="logout-btn" onclick="logout()">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section id="player-section">
+                <div id="current-song">Pilih lagu dari playlist...</div>
+                <audio id="audio-player" controls></audio>
+                <div class="controls">
+                    <button onclick="prevSong()" title="Sebelumnya">⏮</button>
+                    <button onclick="nextSong()" title="Berikutnya">⏭</button>
+                </div>
+            </section>
+
+            <section id="request-section">
+                <h3>Request Lagu <span class="section-note">Proses 1×24 jam</span></h3>
+                <div class="input-group">
+                    <input type="text" id="song-request" placeholder="Contoh: Tulus – Hati-Hati di Jalan">
+                    <button onclick="sendRequest()">Kirim</button>
+                </div>
+            </section>
+
+            <section id="playlist-section">
+                <h3>Playlist Drive <span class="section-note" id="song-count"></span></h3>
+                <ul id="playlist-ui">
+                    <li class="playlist-loading">Memuat lagu dari Drive...</li>
+                </ul>
+            </section>
+        </div>
+    </div>
+
+    <!-- ========================
+         MODAL: AKSES DITOLAK
+         Email tidak ada di whitelist
+    ======================== -->
+    <div id="modal-denied" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-icon">🚫</div>
+            <h3>Akses Ditolak</h3>
+            <p>Email <strong id="denied-email"></strong> belum terdaftar atau masih dalam proses verifikasi.</p>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="closeModal('modal-denied'); showScreen('screen-pending')">Lihat Status Pendaftaran</button>
+                <button class="btn-ghost" onclick="closeModal('modal-denied')">Tutup</button>
+            </div>
         </div>
     </div>
 
