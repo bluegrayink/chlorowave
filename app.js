@@ -83,18 +83,34 @@ document.getElementById('reg-form').addEventListener('submit', async (e) => {
     errEl.classList.add('hidden');
 
     try {
-        // Kirim ke Google Form via fetch (no-cors karena Google Form tidak support CORS)
-        // Data tetap masuk ke Sheets meski response opaque
-        const formData = new FormData();
-        formData.append(CONFIG.FORM_FIELDS.email,    email);
-        formData.append(CONFIG.FORM_FIELDS.shareUrl, shareUrl);
-        formData.append(CONFIG.FORM_FIELDS.refNum,   refNum);
+        const iframe = document.createElement('iframe');
+iframe.name = 'hidden-form-target';
+iframe.style.display = 'none';
+document.body.appendChild(iframe);
 
-        await fetch(CONFIG.FORM_ENDPOINT, {
-            method: 'POST',
-            mode: 'no-cors',  // Google Form tidak support CORS, tapi data tetap masuk
-            body: formData
-        });
+const form = document.createElement('form');
+form.action = CONFIG.FORM_ENDPOINT;
+form.method = 'POST';
+form.target = 'hidden-form-target';
+
+const fields = {
+    [CONFIG.FORM_FIELDS.email]:    email,
+    [CONFIG.FORM_FIELDS.shareUrl]: shareUrl,
+    [CONFIG.FORM_FIELDS.refNum]:   refNum,
+};
+
+for (const [name, value] of Object.entries(fields)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+}
+
+document.body.appendChild(form);
+form.submit();
+
+await new Promise(resolve => setTimeout(resolve, 1500));
 
         // Simpan status pending di lokal
         localStorage.setItem('cw_status', 'pending');
