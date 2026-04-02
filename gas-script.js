@@ -25,7 +25,7 @@ const CONFIG = {
     SHEET_NAME: 'Responses', // Nama sheet (biasanya "Form Responses 1" atau "Responses")
 
     // Kolom (0-indexed): sesuaikan jika urutan kolom di Sheet berbeda
-    COL_EMAIL:  1,  // Kolom B = index 1
+    COL_EMAIL:  2,  // Kolom C = index 2
     COL_STATUS: 4,  // Kolom E = index 4
 
     // Email admin untuk notifikasi tambahan (opsional, Google Form sudah kirim notif)
