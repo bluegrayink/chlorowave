@@ -797,3 +797,67 @@ audio {
     section { padding: 16px; }
     .modal-content { padding: 24px 20px; }
 }
+
+/* ==============================================
+   SOUNDBAR ANIMATION
+============================================== */
+.soundbar {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 14px;
+    width: 14px;
+}
+
+.soundbar .bar {
+    display: inline-block;
+    width: 2.5px;
+    background: var(--green);
+    border-radius: 2px;
+    animation: none;
+    height: 4px;
+}
+
+#playlist-ui li.track-active .soundbar .bar { animation-play-state: running; }
+
+.soundbar .b1 { animation: bounce 0.8s ease-in-out infinite;       animation-delay: 0s;    height: 8px; }
+.soundbar .b2 { animation: bounce 0.8s ease-in-out infinite;       animation-delay: 0.15s; height: 12px; }
+.soundbar .b3 { animation: bounce 0.8s ease-in-out infinite;       animation-delay: 0.3s;  height: 6px; }
+.soundbar .b4 { animation: bounce 0.8s ease-in-out infinite;       animation-delay: 0.45s; height: 10px; }
+
+@keyframes bounce {
+    0%, 100% { transform: scaleY(0.3); }
+    50%       { transform: scaleY(1); }
+}
+
+/* Track active state */
+#playlist-ui li.track-active {
+    background: var(--surface-3);
+    color: var(--green);
+}
+
+/* Playlist header (nama subfolder) */
+.playlist-header {
+    padding: 14px 12px 6px !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: default !important;
+    border-bottom: 1px solid var(--border) !important;
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.playlist-header:hover { background: transparent !important; }
+
+.playlist-count {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+}
