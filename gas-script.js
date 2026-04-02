@@ -26,7 +26,7 @@ const CONFIG = {
 
     // Kolom (0-indexed): sesuaikan jika urutan kolom di Sheet berbeda
     COL_EMAIL:  2,  // Kolom C = index 2
-    COL_STATUS: 4,  // Kolom E = index 4
+    COL_STATUS: 5,  // Kolom F = index 5
 
     // Email admin untuk notifikasi tambahan (opsional, Google Form sudah kirim notif)
     ADMIN_EMAIL: 'emailadmin@gmail.com',
