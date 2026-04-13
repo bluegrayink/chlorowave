@@ -172,15 +172,15 @@
                     <div id="user-profile">
                         <div class="user-info" onclick="toggleUserMenu()">
                             <span id="username-display">Loading...</span>
-                            <span class="arrow-icon">▼</span>
+                            <svg class="arrow-icon" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                                <path d="M1 3l4 4 4-4"/>
+                            </svg>
                         </div>
                         <div id="user-menu" class="hidden">
                             <div class="menu-item">
                                 <label>Edit Nama Tampilan:</label>
-                                <div class="input-row">
-                                    <input type="text" id="edit-username-input" placeholder="Nama baru...">
-                                    <button onclick="saveUsername()">Simpan</button>
-                                </div>
+                                <input type="text" id="edit-username-input" placeholder="Nama baru...">
+                                <button class="btn-save-username" onclick="saveUsername()">Simpan</button>
                             </div>
                             <hr>
                             <button class="logout-btn" onclick="logout()">Logout</button>
@@ -194,16 +194,16 @@
                 <canvas id="visualizer-canvas" width="460" height="48"></canvas>
                 <audio id="audio-player" controls></audio>
                 <div class="controls">
-                    <button onclick="prevSong()" title="Sebelumnya">⏮</button>
-                    <button onclick="nextSong()" title="Berikutnya">⏭</button>
-                </div>
-            </section>
-
-            <section id="request-section">
-                <h3>Request Lagu <span class="section-note">Proses 1×24 jam</span></h3>
-                <div class="input-group">
-                    <input type="text" id="song-request" placeholder="Contoh: Tulus – Hati-Hati di Jalan">
-                    <button onclick="sendRequest()">Kirim</button>
+                    <button onclick="prevSong()" title="Sebelumnya" class="ctrl-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
+                        </svg>
+                    </button>
+                    <button onclick="nextSong()" title="Berikutnya" class="ctrl-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 18l8.5-6L6 6v12zm2.5-6 5.5 3.9V8.1L8.5 12zM16 6h2v12h-2z"/>
+                        </svg>
+                    </button>
                 </div>
             </section>
 
