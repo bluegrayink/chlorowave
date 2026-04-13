@@ -861,3 +861,15 @@ audio {
     text-transform: none;
     letter-spacing: 0;
 }
+
+/* ==============================================
+   VISUALIZER CANVAS
+============================================== */
+#visualizer-canvas {
+    width: 100%;
+    height: 48px;
+    display: block;
+    margin-bottom: 10px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+}
