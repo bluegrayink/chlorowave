@@ -3,8 +3,8 @@
 // ============================================================
 
 const CONFIG = {
-    GOOGLE_CLIENT_ID: '721053641807-k0be448jbrkhd3cu9e5iuj6l7vv3nh0g.apps.googleusercontent.com',
-    GAS_ENDPOINT: 'https://script.google.com/macros/s/AKfycbwccnydHu5Q6H1zvKN_awF_4Np4JtDSmc1GXSYSvBEYIqoXiBK9ZpkIhcJAF0Qv-bGCNg/exec',
+    GOOGLE_CLIENT_ID: '56742945749-gm2otrtbtqilaquo4rt54hk59v80ld1h.apps.googleusercontent.com',
+    GAS_ENDPOINT: 'https://script.google.com/macros/s/AKfycbyqOhNbZouhCXv5fdHRLBb1OIe9kIK9waVgwty0j_rHXYRHwRtrimvuvOqxLQRoh79q/exec',
     FOLDER_NAME: 'chlorowave',
 };
 
@@ -389,8 +389,8 @@ async function playSong(idx) {
         const name = file.name.replace(/\.[^.]+$/, '');
         songEl.textContent = name;
 
-        // Animasi sound bar di track aktif
-        startBarAnimation(idx);
+        // Visualizer real-time + animasi bar di track
+        startVisualizer(idx);
 
         // Media Session
         updateMediaSession(name, file.playlistName);
@@ -408,16 +408,81 @@ function nextSong() { if (playlist.length) playSong(currentIdx >= playlist.lengt
 
 document.getElementById('audio-player').addEventListener('ended', () => nextSong());
 document.getElementById('audio-player').addEventListener('pause',  () => stopBarAnimation());
-document.getElementById('audio-player').addEventListener('play',   () => { if (currentIdx >= 0) startBarAnimation(currentIdx); });
+document.getElementById('audio-player').addEventListener('play',   () => { if (currentIdx >= 0) startBarAnimationCSS(currentIdx); });
 
 // ============================================================
-//  SOUND BAR ANIMATION
+//  WEB AUDIO VISUALIZER — Real-time frequency bars
 // ============================================================
-function startBarAnimation(idx) {
+function initAudioContext() {
+    if (audioCtx) return;
+    const player = document.getElementById('audio-player');
+    audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
+    analyser   = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    analyser.smoothingTimeConstant = 0.8;
+    sourceNode = audioCtx.createMediaElementSource(player);
+    sourceNode.connect(analyser);
+    analyser.connect(audioCtx.destination);
+}
+
+function startVisualizer(idx) {
+    stopVisualizer();
+
+    try { initAudioContext(); } catch(e) { startBarAnimationCSS(idx); return; }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    // Visualizer canvas di player section
+    drawPlayerVisualizer();
+
+    // Mini soundbar di playlist track
+    startBarAnimationCSS(idx);
+}
+
+function drawPlayerVisualizer() {
+    const canvas = document.getElementById('visualizer-canvas');
+    if (!canvas || !analyser) return;
+
+    const ctx    = canvas.getContext('2d');
+    const W      = canvas.width;
+    const H      = canvas.height;
+    const bufLen = analyser.frequencyBinCount;
+    const dataArr = new Uint8Array(bufLen);
+
+    function draw() {
+        animFrameId = requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(dataArr);
+
+        ctx.clearRect(0, 0, W, H);
+
+        const barCount = 28;
+        const barW     = (W / barCount) - 2;
+        const step     = Math.floor(bufLen / barCount);
+
+        for (let i = 0; i < barCount; i++) {
+            const val    = dataArr[i * step] / 255;
+            const barH   = Math.max(3, val * H);
+            const x      = i * (barW + 2);
+            const y      = H - barH;
+
+            // Gradient warna hijau ke putih berdasarkan amplitudo
+            const alpha  = 0.4 + val * 0.6;
+            ctx.fillStyle = val > 0.7
+                ? `rgba(255, 255, 255, ${alpha})`
+                : `rgba(29, 185, 84, ${alpha})`;
+
+            ctx.beginPath();
+            ctx.roundRect(x, y, barW, barH, 2);
+            ctx.fill();
+        }
+    }
+    draw();
+}
+
+function startBarAnimationCSS(idx) {
+    // Mini animated bars di playlist item
     stopBarAnimation();
     const barEl = document.getElementById(`bar-${idx}`);
     if (!barEl) return;
-
     barEl.classList.add('playing');
     barEl.innerHTML = `
         <span class="soundbar">
@@ -438,6 +503,9 @@ function stopBarAnimation() {
 function stopVisualizer() {
     stopBarAnimation();
     if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+    // Clear canvas
+    const canvas = document.getElementById('visualizer-canvas');
+    if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 }
 
 // ============================================================
