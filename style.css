@@ -1,7 +1,7 @@
 /* ==============================================
    CHLOROWAVE — style.css
    Font: Space Mono (logo/mono) + DM Sans (UI)
-   Theme: Dark, hijau, clean
+   Theme: Dark, hijau Spotify, clean
 ============================================== */
 
 :root {
@@ -917,4 +917,81 @@ audio {
     stroke-linecap: round;
     stroke-linejoin: round;
     flex-shrink: 0;
+}
+
+/* ==============================================
+   CUSTOM PLAYER CONTROLS
+============================================== */
+.progress-wrap {
+    width: 100%;
+    height: 4px;
+    background: var(--surface-3);
+    border-radius: 2px;
+    cursor: pointer;
+    margin: 10px 0 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--green);
+    border-radius: 2px;
+    transition: width 0.1s linear;
+    pointer-events: none;
+}
+
+.progress-wrap:hover .progress-bar {
+    background: #1ed760;
+}
+
+.time-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    font-family: var(--mono);
+}
+
+.play-btn {
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 50% !important;
+    background: var(--green) !important;
+    color: #000 !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.play-btn:hover {
+    background: #1ed760 !important;
+    transform: scale(1.05);
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 4px;
+}
+
+.ctrl-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, transform 0.15s;
+}
+
+.ctrl-btn:hover {
+    color: var(--text);
+    transform: scale(1.1);
 }
