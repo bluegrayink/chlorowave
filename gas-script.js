@@ -1,14 +1,15 @@
 // ============================================================
 //  CHLOROWAVE — Google Apps Script
-//  Paste seluruh kode ini ke Apps Script yang terhubung ke Spreadsheet
+//  Paste seluruh kode ini ke Apps Script (script.google.com)
+//  Login dengan cs.chlorowave@gmail.com
 // ============================================================
 
 const CONFIG = {
-    SPREADSHEET_ID: '1Z1DF4rvtyPIseW22yU16syMJp6KNM-pEPjGncQyxBnE',
-    SHEET_NAME: 'Form Responses 1',
+    SPREADSHEET_ID: '1xuyKqv3LMemxOVcci8T9AIY34AgcLEfI4ITmS4ILqzg',
+    SHEET_NAME: 'Sheet1',
     COL_EMAIL:  2,  // Kolom C = index 2
     COL_STATUS: 5,  // Kolom F = index 5
-    ADMIN_EMAIL: 'alber7zone@gmail.com',
+    ADMIN_EMAIL: 'cs.chlorowave@gmail.com',
     EMAIL_SENDER_NAME: 'ChloroWave',
 };
 
@@ -42,7 +43,7 @@ function doGet(e) {
 }
 
 // ============================================================
-//  FUNGSI 1: Registrasi user baru — simpan ke Sheet
+//  FUNGSI 1: Registrasi user baru
 // ============================================================
 function registerUser(email, shareUrl, refNum) {
     if (!email) return { ok: false, reason: 'no_email' };
@@ -53,13 +54,13 @@ function registerUser(email, shareUrl, refNum) {
     if (!sheet) return { ok: false, reason: 'sheet_not_found' };
 
     sheet.appendRow([
-        new Date().toLocaleString('id-ID'),  // A: Timestamp
-        '',                                   // B: Email Address (kosong)
-        email,                                // C: Email Gmail
-        shareUrl || '',                       // D: Link Share
-        refNum   || '',                       // E: Nomor Referensi
-        'pending',                            // F: Status
-        ''                                    // G: Catatan Admin
+        new Date().toLocaleString('id-ID'),
+        '',
+        email,
+        shareUrl || '',
+        refNum   || '',
+        'pending',
+        ''
     ]);
 
     return { ok: true };
@@ -119,7 +120,7 @@ function logSongRequest(song, email) {
 }
 
 // ============================================================
-//  FUNGSI 4: Trigger — kirim email saat status diubah jadi "active"
+//  FUNGSI 4: Trigger — kirim email saat status diubah "active"
 //  Setup: Triggers → Add Trigger → onStatusChange → From Spreadsheet → On edit
 // ============================================================
 function onStatusChange(e) {
@@ -204,7 +205,7 @@ Terima kasih sudah mendukung ChloroWave! 🎵
 //  TEST — jalankan manual dari editor
 // ============================================================
 function testRegister() {
-    const result = registerUser('test@gmail.com', 'https://threads.net/test', 'TRF123TEST');
+    const result = registerUser('test@gmail.com', 'https://threads.net/test', 'TRF123');
     Logger.log(JSON.stringify(result));
 }
 
@@ -214,6 +215,6 @@ function testCheckWhitelist() {
 }
 
 function testSendEmail() {
-    sendActivationEmail('alber7zone@gmail.com');
+    sendActivationEmail('cs.chlorowave@gmail.com');
     Logger.log('Email terkirim');
 }
