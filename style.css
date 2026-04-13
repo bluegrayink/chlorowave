@@ -1,7 +1,7 @@
 /* ==============================================
    CHLOROWAVE — style.css
    Font: Space Mono (logo/mono) + DM Sans (UI)
-   Theme: Dark, hijau Spotify, clean
+   Theme: Dark, hijau, clean
 ============================================== */
 
 :root {
@@ -872,4 +872,49 @@ audio {
     margin-bottom: 10px;
     border-radius: var(--radius-sm);
     background: transparent;
+}
+
+/* Username menu - tombol simpan di bawah */
+.btn-save-username {
+    width: 100%;
+    margin-top: 8px;
+    background: var(--green) !important;
+    color: #000 !important;
+    border: none !important;
+    padding: 8px !important;
+    border-radius: var(--radius-sm) !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    cursor: pointer !important;
+}
+
+.btn-save-username:hover { background: #1ed760 !important; }
+
+/* Edit username input full width */
+#user-menu .menu-item input[type="text"] {
+    width: 100%;
+    margin-top: 6px;
+}
+
+/* Control buttons SVG */
+.ctrl-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+}
+
+.ctrl-btn svg { display: block; }
+
+/* Arrow icon fix */
+.arrow-icon {
+    width: 10px;
+    height: 10px;
+    color: var(--text-muted);
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
 }
