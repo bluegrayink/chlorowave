@@ -995,3 +995,140 @@ audio {
     color: var(--text);
     transform: scale(1.1);
 }
+
+/* ==============================================
+   GUIDE MODAL
+============================================== */
+.modal-guide-content {
+    max-width: 460px !important;
+    text-align: left !important;
+    padding: 28px !important;
+}
+
+.guide-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.guide-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.guide-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+}
+
+.guide-close:hover { color: var(--text); }
+
+.guide-intro {
+    color: var(--text-dim);
+    font-size: 0.88rem;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.guide-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.guide-step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+.step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--green);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.step-body strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 3px;
+}
+
+.step-body p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.step-body em {
+    color: var(--text-dim);
+    font-style: normal;
+    font-weight: 500;
+}
+
+.guide-note {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber, #f5a623);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.guide-note strong { color: var(--text-dim); }
+.guide-note code {
+    background: var(--surface-3, #282828);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--green);
+}
+
+/* Guide link di landing */
+.guide-link {
+    font-size: 0.85rem !important;
+    color: var(--text-muted) !important;
+    margin-top: -8px;
+}
+
+.guide-link:hover { color: var(--green) !important; }
+
+/* Landing footer */
+.landing-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 16px;
+}
+
+.landing-footer a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.landing-footer a:hover { color: var(--green); }
+
+.landing-footer span { color: var(--surface-3, #282828); }
