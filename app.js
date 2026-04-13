@@ -4,7 +4,7 @@
 
 const CONFIG = {
     GOOGLE_CLIENT_ID: '721053641807-k0be448jbrkhd3cu9e5iuj6l7vv3nh0g.apps.googleusercontent.com',
-    GAS_ENDPOINT: 'https://script.google.com/macros/s/AKfycbwccnydHu5Q6H1zvKN_awF_4Np4JtDSmc1GXSYSvBEYIqoXiBK9ZpklhcJAF0Qv-bGCNg/exec',
+    GAS_ENDPOINT: 'https://script.google.com/macros/s/AKfycbwccnydHu5Q6H1zvKN_awF_4Np4JtDSmc1GXSYSvBEYIqoXiBK9ZpkIhcJAF0Qv-bGCNg/exec',
     FOLDER_NAME: 'chlorowave',
 };
 
