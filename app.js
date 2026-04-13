@@ -3,8 +3,8 @@
 // ============================================================
 
 const CONFIG = {
-    GOOGLE_CLIENT_ID: '56742945749-gm2otrtbtqilaquo4rt54hk59v80ld1h.apps.googleusercontent.com',
-    GAS_ENDPOINT: 'https://script.google.com/macros/s/AKfycbyqOhNbZouhCXv5fdHRLBb1OIe9kIK9waVgwty0j_rHXYRHwRtrimvuvOqxLQRoh79q/exec',
+    GOOGLE_CLIENT_ID: '721053641807-k0be448jbrkhd3cu9e5iuj6l7vv3nh0g.apps.googleusercontent.com',
+    GAS_ENDPOINT: 'https://script.google.com/macros/s/AKfycbxX4BT4SEpHld7AAslHUtSb-iMiRi5FmTyZGDTLKzF-ey-igHo-v2WQ5uWniWlA8EMw/exec',
     FOLDER_NAME: 'chlorowave',
 };
 
