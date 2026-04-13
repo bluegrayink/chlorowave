@@ -54,6 +54,17 @@
                 <button class="btn-primary" onclick="showScreen('screen-register')">Daftar Sekarang</button>
                 <button class="btn-ghost" onclick="tryLogin()">Sudah punya akun? Login</button>
             </div>
+            <button class="btn-link guide-link" onclick="openModal('modal-guide')">
+                ❓ Panduan login pertama kali
+            </button>
+
+            <div class="landing-footer">
+                <a href="./privacy-policy.html" target="_blank">Privacy Policy</a>
+                <span>·</span>
+                <a href="./terms.html" target="_blank">Terms of Service</a>
+                <span>·</span>
+                <span>© 2026 Bluegray Ink</span>
+            </div>
         </div>
     </div>
 
@@ -250,6 +261,55 @@
                 <button class="btn-primary" onclick="closeModal('modal-denied'); showScreen('screen-pending')">Lihat Status Pendaftaran</button>
                 <button class="btn-ghost" onclick="closeModal('modal-denied')">Tutup</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PANDUAN LOGIN -->
+    <div id="modal-guide" class="modal-overlay hidden">
+        <div class="modal-content modal-guide-content">
+            <div class="guide-header">
+                <h3>Panduan Login Pertama Kali</h3>
+                <button class="guide-close" onclick="closeModal('modal-guide')">✕</button>
+            </div>
+
+            <p class="guide-intro">Saat login pertama kali, Google akan menampilkan peringatan keamanan. Ini normal untuk aplikasi yang belum diverifikasi secara resmi. Ikuti langkah berikut:</p>
+
+            <div class="guide-steps">
+                <div class="guide-step">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <strong>Klik "Advanced"</strong>
+                        <p>Di bagian bawah kiri layar peringatan, klik teks <em>"Advanced"</em>.</p>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <strong>Klik "Go to ChloroWave (unsafe)"</strong>
+                        <p>Teks ini akan muncul di bawah setelah klik Advanced. Klik untuk melanjutkan.</p>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <strong>Klik "Allow"</strong>
+                        <p>Izinkan ChloroWave mengakses Google Drive kamu (read-only, hanya baca).</p>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="step-num">4</div>
+                    <div class="step-body">
+                        <strong>Selesai!</strong>
+                        <p>Login berikutnya akan langsung masuk tanpa peringatan ini lagi.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-note">
+                <strong>Kenapa ada peringatan ini?</strong> ChloroWave sedang dalam proses verifikasi resmi oleh Google. Peringatan ini bukan tanda bahaya — aplikasi ini aman dan hanya membaca file audio di folder <code>chlorowave</code> di Drive kamu.
+            </div>
+
+            <button class="btn-primary" onclick="closeModal('modal-guide')" style="width:100%;margin-top:20px">Mengerti, Lanjutkan</button>
         </div>
     </div>
 
