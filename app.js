@@ -406,9 +406,57 @@ async function playSong(idx) {
 function prevSong() { if (playlist.length) playSong(currentIdx <= 0 ? playlist.length - 1 : currentIdx - 1); }
 function nextSong() { if (playlist.length) playSong(currentIdx >= playlist.length - 1 ? 0 : currentIdx + 1); }
 
-document.getElementById('audio-player').addEventListener('ended', () => nextSong());
-document.getElementById('audio-player').addEventListener('pause',  () => stopBarAnimation());
-document.getElementById('audio-player').addEventListener('play',   () => { if (currentIdx >= 0) startBarAnimationCSS(currentIdx); });
+// ============================================================
+//  CUSTOM PLAYER CONTROLS
+// ============================================================
+function togglePlay() {
+    const player = document.getElementById('audio-player');
+    if (player.paused) { player.play(); } else { player.pause(); }
+}
+
+function updatePlayBtn(playing) {
+    const playIcon  = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    if (!playIcon || !pauseIcon) return;
+    if (playing) {
+        playIcon.style.display  = 'none';
+        pauseIcon.style.display = 'block';
+    } else {
+        playIcon.style.display  = 'block';
+        pauseIcon.style.display = 'none';
+    }
+}
+
+function seekTo(e) {
+    const player = document.getElementById('audio-player');
+    if (!player.duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct  = (e.clientX - rect.left) / rect.width;
+    player.currentTime = pct * player.duration;
+}
+
+function formatTime(sec) {
+    if (isNaN(sec)) return '0:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+const _player = document.getElementById('audio-player');
+_player.addEventListener('ended',          () => { updatePlayBtn(false); nextSong(); });
+_player.addEventListener('pause',          () => { updatePlayBtn(false); stopBarAnimation(); });
+_player.addEventListener('play',           () => { updatePlayBtn(true);  if (currentIdx >= 0) startBarAnimationCSS(currentIdx); });
+_player.addEventListener('timeupdate',     () => {
+    const pct = _player.duration ? (_player.currentTime / _player.duration) * 100 : 0;
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.width = pct + '%';
+    const cur = document.getElementById('time-current');
+    if (cur) cur.textContent = formatTime(_player.currentTime);
+});
+_player.addEventListener('loadedmetadata', () => {
+    const tot = document.getElementById('time-total');
+    if (tot) tot.textContent = formatTime(_player.duration);
+});
 
 // ============================================================
 //  WEB AUDIO VISUALIZER — Real-time frequency bars
