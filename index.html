@@ -192,15 +192,36 @@
             <section id="player-section">
                 <div id="current-song">Pilih lagu dari playlist...</div>
                 <canvas id="visualizer-canvas" width="460" height="48"></canvas>
-                <audio id="audio-player" controls></audio>
+
+                <!-- Progress bar -->
+                <div class="progress-wrap" onclick="seekTo(event)">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <div class="time-row">
+                    <span id="time-current">0:00</span>
+                    <span id="time-total">0:00</span>
+                </div>
+
+                <!-- Hidden audio element -->
+                <audio id="audio-player"></audio>
+
+                <!-- Custom controls -->
                 <div class="controls">
                     <button onclick="prevSong()" title="Sebelumnya" class="ctrl-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
                         </svg>
                     </button>
+                    <button onclick="togglePlay()" id="play-btn" title="Play/Pause" class="ctrl-btn play-btn">
+                        <svg id="play-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <svg id="pause-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                        </svg>
+                    </button>
                     <button onclick="nextSong()" title="Berikutnya" class="ctrl-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M6 18l8.5-6L6 6v12zm2.5-6 5.5 3.9V8.1L8.5 12zM16 6h2v12h-2z"/>
                         </svg>
                     </button>
