@@ -1330,3 +1330,98 @@ audio {
 
 /* Add bottom padding to app when mini player visible */
 #app { padding-bottom: 100px; }
+
+/* ==============================================
+   FIXED CONTROL BUTTONS — uniform size
+============================================== */
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.ctrl-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, transform 0.15s;
+    border-radius: 50%;
+    flex-shrink: 0;
+    padding: 0;
+    position: relative;
+}
+
+.ctrl-btn:hover { color: var(--text); transform: scale(1.08); }
+
+/* Side buttons (shuffle, prev, next, repeat) — same size box */
+.ctrl-side {
+    width: 44px;
+    height: 44px;
+}
+
+/* Play button — larger circle */
+.play-btn {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 50% !important;
+    background: var(--green) !important;
+    color: #000 !important;
+    border: none !important;
+}
+
+.play-btn:hover {
+    background: #1ed760 !important;
+    transform: scale(1.05) !important;
+}
+
+/* Active state for shuffle/repeat */
+.ctrl-active { color: var(--green) !important; }
+
+/* Repeat label (1 = repeat one) */
+.repeat-label {
+    position: absolute;
+    bottom: 4px;
+    right: 6px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: var(--green);
+    line-height: 1;
+}
+
+/* Mini player buttons uniform */
+.mini-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.mini-ctrl {
+    width: 36px;
+    height: 36px;
+    opacity: 0.8;
+    color: var(--text-dim);
+}
+
+.mini-ctrl:hover { opacity: 1; color: var(--text); }
+
+.mini-play-btn {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 50% !important;
+    background: var(--green) !important;
+    color: #000 !important;
+    border: none !important;
+}
+
+@media (max-width: 400px) {
+    .ctrl-side { width: 40px; height: 40px; }
+    .play-btn  { width: 52px !important; height: 52px !important; }
+    .controls  { gap: 4px; }
+}
