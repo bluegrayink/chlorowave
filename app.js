@@ -426,7 +426,11 @@ async function updateCoverArt(songName, idx) {
             miniCover.style.backgroundImage    = `url('${coverUrl}')`;
             miniCover.style.backgroundSize     = 'cover';
             miniCover.style.backgroundPosition = 'center';
+            miniCover.textContent = '';
         }
+
+        // Update notifikasi cover
+        updateMediaSessionCover(coverUrl);
     }
 }
 
@@ -748,13 +752,26 @@ function setupMediaSession() {
     });
 }
 
-function updateMediaSession(title, artist, album) {
+function updateMediaSession(title, artist, album, coverUrl) {
     if (!('mediaSession' in navigator)) return;
+    const artwork = coverUrl
+        ? [{ src: coverUrl, sizes: '250x250', type: 'image/jpeg' }]
+        : [{ src: 'https://bluegrayink.github.io/chlorowave/icon.png', sizes: '192x192', type: 'image/png' }];
     navigator.mediaSession.metadata = new MediaMetadata({
         title, artist,
-        album:   album || 'chlorowave',
-        artwork: [{ src: 'https://bluegrayink.github.io/chlorowave/icon.png', sizes: '192x192', type: 'image/png' }]
+        album:   album || 'ChloroWave',
+        artwork
     });
+    navigator.mediaSession.playbackState = 'playing';
+}
+
+function updateMediaSessionCover(coverUrl) {
+    if (!('mediaSession' in navigator) || !navigator.mediaSession.metadata) return;
+    if (coverUrl) {
+        navigator.mediaSession.metadata.artwork = [
+            { src: coverUrl, sizes: '250x250', type: 'image/jpeg' }
+        ];
+    }
 }
 
 // ============================================================
