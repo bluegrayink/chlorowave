@@ -1464,3 +1464,45 @@ audio {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
 }
+
+/* ==============================================
+   FONT AWESOME ICON ADJUSTMENTS
+============================================== */
+.logo-fa-icon {
+    font-size: 1.8rem;
+    color: var(--green);
+}
+
+.header-fa-icon {
+    font-size: 1.2rem;
+    color: var(--green);
+}
+
+.arrow-icon {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    width: auto;
+    height: auto;
+    stroke: none;
+    fill: none;
+}
+
+/* FA icons inside ctrl-btn */
+.ctrl-btn i,
+.ctrl-side i {
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+
+.play-btn i { font-size: 1.15rem; }
+
+.mini-play-btn i { font-size: 1rem; }
+
+.mini-ctrl i { font-size: 1rem; }
+
+/* Refresh button FA icon */
+.btn-refresh i { font-size: 0.85rem; }
+.btn-refresh.refreshing i { animation: spin 0.8s linear infinite; }
+
+/* Repeat label position fix with FA */
+#repeat-btn { position: relative; }
