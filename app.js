@@ -385,7 +385,7 @@ function trackHTML(idx, song) {
                 <span class="track-name">${sanitize(parsed.title || name)}</span>
                 ${parsed.artist ? `<span class="track-artist">${sanitize(parsed.artist)}</span>` : ''}
             </div>
-            <span class="track-icon" id="bar-${idx}">♪</span>
+            <span class="track-icon" id="bar-${idx}"></span>
         </li>`;
 }
 
