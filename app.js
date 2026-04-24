@@ -35,9 +35,56 @@ function showScreen(id) {
 }
 
 // ============================================================
+//  SESSION MANAGEMENT - persist 6 jam
+// ============================================================
+const SESSION_DURATION = 6 * 60 * 60 * 1000;
+
+function saveSession(token, email) {
+    sessionStorage.setItem('cw_session', JSON.stringify({ token, email, loginAt: Date.now() }));
+}
+
+function loadSession() {
+    try {
+        const raw = sessionStorage.getItem('cw_session');
+        if (!raw) return null;
+        const session = JSON.parse(raw);
+        if (Date.now() - session.loginAt > SESSION_DURATION) {
+            sessionStorage.removeItem('cw_session');
+            return null;
+        }
+        return session;
+    } catch { return null; }
+}
+
+function clearSession() { sessionStorage.removeItem('cw_session'); }
+
+function touchSession() {
+    try {
+        const raw = sessionStorage.getItem('cw_session');
+        if (!raw) return;
+        const session = JSON.parse(raw);
+        session.loginAt = Date.now();
+        sessionStorage.setItem('cw_session', JSON.stringify(session));
+    } catch {}
+}
+
+document.addEventListener('click', touchSession);
+
+// ============================================================
 //  INIT
 // ============================================================
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
+    const session = loadSession();
+
+    if (session && session.token && session.email) {
+        accessToken = session.token;
+        userEmail   = session.email;
+        updateUsernameUI();
+        showScreen('screen-app');
+        fetchSongsFromDrive();
+        return;
+    }
+
     const status = localStorage.getItem('cw_status');
     const email  = localStorage.getItem('cw_email');
     if (status === 'pending' && email) {
@@ -148,6 +195,8 @@ function onLoginSuccess(user) {
     }
     localStorage.setItem('cw_status', 'active');
     localStorage.setItem('cw_email',  userEmail);
+    // Simpan session agar tidak login ulang saat refresh
+    saveSession(accessToken, userEmail);
     updateUsernameUI();
     showScreen('screen-app');
     fetchSongsFromDrive();
@@ -182,6 +231,7 @@ function saveUsername() {
 function logout() {
     if (confirm('Yakin mau logout?')) {
         accessToken = null; userEmail = null; playlist = []; playlists = {}; currentIdx = -1;
+        clearSession();
         stopVisualizer();
         hideMiniPlayer();
         showScreen('screen-landing');
@@ -437,13 +487,24 @@ async function updateCoverArt(songName, idx) {
 // ============================================================
 //  SHUFFLE & REPEAT
 // ============================================================
+let shuffleQueue    = []; // lagu yang belum diputar di shuffle saat ini
+let shufflePlayed   = []; // lagu yang sudah diputar di shuffle ini
+
 function rebuildShuffleIdxs() {
-    shuffledIdxs = [...Array(playlist.length).keys()];
-    // Fisher-Yates shuffle
-    for (let i = shuffledIdxs.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledIdxs[i], shuffledIdxs[j]] = [shuffledIdxs[j], shuffledIdxs[i]];
+    // Fisher-Yates shuffle — semua lagu masuk queue dulu
+    shuffleQueue  = [...Array(playlist.length).keys()];
+    shufflePlayed = [];
+    // Keluarkan lagu yang sedang diputar dari queue, taruh di played
+    if (currentIdx >= 0) {
+        shuffleQueue  = shuffleQueue.filter(i => i !== currentIdx);
+        shufflePlayed = [currentIdx];
     }
+    // Shuffle queue
+    for (let i = shuffleQueue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffleQueue[i], shuffleQueue[j]] = [shuffleQueue[j], shuffleQueue[i]];
+    }
+    shuffledIdxs = currentIdx >= 0 ? [currentIdx, ...shuffleQueue] : [...shuffleQueue];
 }
 
 function toggleShuffle() {
@@ -451,9 +512,23 @@ function toggleShuffle() {
     if (shuffleMode) rebuildShuffleIdxs();
     const btn = document.getElementById('shuffle-btn');
     if (btn) btn.classList.toggle('ctrl-active', shuffleMode);
-    // Update mini player button juga
-    const miniShuffle = document.getElementById('mini-shuffle-btn');
-    if (miniShuffle) miniShuffle.classList.toggle('ctrl-active', shuffleMode);
+}
+
+// ============================================================
+//  REFRESH PLAYLIST
+// ============================================================
+async function refreshPlaylist() {
+    const btn = document.querySelector('.btn-refresh');
+    if (btn) {
+        btn.classList.add('refreshing');
+        btn.disabled = true;
+    }
+    coverCache = {}; // clear cover art cache
+    await fetchSongsFromDrive();
+    if (btn) {
+        btn.classList.remove('refreshing');
+        btn.disabled = false;
+    }
 }
 
 function toggleRepeat() {
@@ -480,18 +555,29 @@ function updateRepeatBtn() {
 
 function getNextIdx() {
     if (shuffleMode) {
-        const pos  = shuffledIdxs.indexOf(currentIdx);
-        const next = (pos + 1) % shuffledIdxs.length;
-        return shuffledIdxs[next];
+        // Pindahkan currentIdx ke played
+        if (!shufflePlayed.includes(currentIdx)) shufflePlayed.push(currentIdx);
+        shuffleQueue = shuffleQueue.filter(i => i !== currentIdx);
+
+        if (shuffleQueue.length === 0) {
+            // Semua lagu sudah diputar — shuffle ulang dari awal
+            rebuildShuffleIdxs();
+        }
+        return shuffleQueue[0];
     }
     return currentIdx >= playlist.length - 1 ? 0 : currentIdx + 1;
 }
 
 function getPrevIdx() {
     if (shuffleMode) {
-        const pos  = shuffledIdxs.indexOf(currentIdx);
-        const prev = (pos - 1 + shuffledIdxs.length) % shuffledIdxs.length;
-        return shuffledIdxs[prev];
+        // Kembali ke lagu sebelumnya dari history played
+        if (shufflePlayed.length > 1) {
+            const prev = shufflePlayed[shufflePlayed.length - 2];
+            shufflePlayed.pop();
+            shuffleQueue.unshift(currentIdx);
+            return prev;
+        }
+        return currentIdx;
     }
     return currentIdx <= 0 ? playlist.length - 1 : currentIdx - 1;
 }
