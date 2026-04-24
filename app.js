@@ -658,13 +658,15 @@ function togglePlay() {
 }
 
 function updatePlayBtn(playing) {
+    // Play icons — hide when playing
     ['play-icon','mini-play-icon'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = playing ? 'none' : 'block';
+        if (el) el.style.display = playing ? 'none' : 'inline-block';
     });
+    // Pause icons — show when playing
     ['pause-icon','mini-pause-icon'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = playing ? 'block' : 'none';
+        if (el) el.style.display = playing ? 'inline-block' : 'none';
     });
 }
 
