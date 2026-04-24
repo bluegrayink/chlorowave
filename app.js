@@ -207,7 +207,7 @@ function onLoginSuccess(user) {
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
-    document.getElementById('username-display').textContent = '👤 ' + name;
+    document.getElementById('username-display').textContent = name;
 }
 
 function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
