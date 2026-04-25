@@ -207,7 +207,7 @@ function onLoginSuccess(user) {
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
-    document.getElementById('username-display').textContent = name;
+    document.getElementById('username-display').textContent = '👤 ' + name;
 }
 
 function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
@@ -385,7 +385,7 @@ function trackHTML(idx, song) {
                 <span class="track-name">${sanitize(parsed.title || name)}</span>
                 ${parsed.artist ? `<span class="track-artist">${sanitize(parsed.artist)}</span>` : ''}
             </div>
-            <span class="track-icon" id="bar-${idx}"></span>
+            <span class="track-icon" id="bar-${idx}">♪</span>
         </li>`;
 }
 
@@ -517,18 +517,8 @@ function toggleShuffle() {
 // ============================================================
 //  REFRESH PLAYLIST
 // ============================================================
-async function refreshPlaylist() {
-    const btn = document.querySelector('.btn-refresh');
-    if (btn) {
-        btn.classList.add('refreshing');
-        btn.disabled = true;
-    }
-    coverCache = {}; // clear cover art cache
-    await fetchSongsFromDrive();
-    if (btn) {
-        btn.classList.remove('refreshing');
-        btn.disabled = false;
-    }
+function refreshPlaylist() {
+    location.reload();
 }
 
 function toggleRepeat() {
