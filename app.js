@@ -207,7 +207,7 @@ function onLoginSuccess(user) {
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
-    document.getElementById('username-display').textContent = '👤 ' + name;
+    document.getElementById('username-display').textContent = name;
 }
 
 function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
@@ -385,7 +385,7 @@ function trackHTML(idx, song) {
                 <span class="track-name">${sanitize(parsed.title || name)}</span>
                 ${parsed.artist ? `<span class="track-artist">${sanitize(parsed.artist)}</span>` : ''}
             </div>
-            <span class="track-icon" id="bar-${idx}">♪</span>
+            <span class="track-icon" id="bar-${idx}"></span>
         </li>`;
 }
 
