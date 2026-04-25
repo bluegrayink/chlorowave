@@ -207,7 +207,7 @@ function onLoginSuccess(user) {
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
-    document.getElementById('username-display').textContent = name;
+    document.getElementById('username-display').textContent = '👤 ' + name;
 }
 
 function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
@@ -385,7 +385,7 @@ function trackHTML(idx, song) {
                 <span class="track-name">${sanitize(parsed.title || name)}</span>
                 ${parsed.artist ? `<span class="track-artist">${sanitize(parsed.artist)}</span>` : ''}
             </div>
-            <span class="track-icon" id="bar-${idx}"></span>
+            <span class="track-icon" id="bar-${idx}">♪</span>
         </li>`;
 }
 
@@ -528,18 +528,13 @@ function toggleRepeat() {
 }
 
 function updateRepeatBtn() {
-    const btn      = document.getElementById('repeat-btn');
-    const miniBtn  = document.getElementById('mini-repeat-btn');
-    const icons    = { none: '↻', all: '↻', one: '➀' };
-    const active   = repeatMode !== 'none';
+    const btn    = document.getElementById('repeat-btn');
+    const active = repeatMode !== 'none';
     if (btn) {
         btn.classList.toggle('ctrl-active', active);
-        btn.title = repeatMode === 'none' ? 'Repeat off' : repeatMode === 'all' ? 'Repeat all' : 'Repeat one';
-        btn.querySelector('.repeat-label').textContent = icons[repeatMode];
-    }
-    if (miniBtn) {
-        miniBtn.classList.toggle('ctrl-active', active);
-        miniBtn.querySelector('.repeat-label').textContent = icons[repeatMode];
+        btn.title = repeatMode === 'none' ? 'Repeat: Off' : repeatMode === 'all' ? 'Repeat: All' : 'Repeat: One';
+        const label = btn.querySelector('.repeat-label');
+        if (label) label.textContent = repeatMode === 'one' ? '1' : '';
     }
 }
 
