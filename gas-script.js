@@ -1,15 +1,23 @@
 // ============================================================
 //  CHLOROWAVE — Google Apps Script
-//  Paste seluruh kode ini ke Apps Script (script.google.com)
-//  Login dengan cs.chlorowave@gmail.com
+//  Paste ke Apps Script yang terhubung ke Google Sheet
+//  Login: cs.chlorowave@gmail.com
+//
+//  STRUKTUR SHEET (setelah kolom Email Address dihapus):
+//  A: Timestamp
+//  B: Email Gmail     → COL_EMAIL = 1
+//  C: Link Share
+//  D: Nomor Referensi
+//  E: Status          → COL_STATUS = 4
+//  F: Catatan Admin
 // ============================================================
 
 const CONFIG = {
-    SPREADSHEET_ID: '1xuyKqv3LMemxOVcci8T9AIY34AgcLEfI4ITmS4ILqzg',
-    SHEET_NAME: 'Sheet1',
-    COL_EMAIL:  2,  // Kolom C = index 2
-    COL_STATUS: 5,  // Kolom F = index 5
-    ADMIN_EMAIL: 'cs.chlorowave@gmail.com',
+    SPREADSHEET_ID:    '1xuyKqv3LMemxOVcci8T9AIY34AgcLEfI4ITmS4ILqzg',
+    SHEET_NAME:        'Sheet1',
+    COL_EMAIL:         1,  // Kolom B = index 1
+    COL_STATUS:        4,  // Kolom E = index 4
+    ADMIN_EMAIL:       'cs.chlorowave@gmail.com',
     EMAIL_SENDER_NAME: 'ChloroWave',
 };
 
@@ -54,13 +62,12 @@ function registerUser(email, shareUrl, refNum) {
     if (!sheet) return { ok: false, reason: 'sheet_not_found' };
 
     sheet.appendRow([
-        new Date().toLocaleString('id-ID'),
-        '',
-        email,
-        shareUrl || '',
-        refNum   || '',
-        'pending',
-        ''
+        new Date().toLocaleString('id-ID'),  // A: Timestamp
+        email,                                // B: Email Gmail
+        shareUrl || '',                       // C: Link Share
+        refNum   || '',                       // D: Nomor Referensi
+        'pending',                            // E: Status
+        ''                                    // F: Catatan Admin
     ]);
 
     return { ok: true };
@@ -87,7 +94,7 @@ function checkWhitelist(email) {
             return {
                 active: rowStatus === 'active',
                 status: rowStatus,
-                row: i + 1
+                row:    i + 1
             };
         }
     }
@@ -131,12 +138,14 @@ function onStatusChange(e) {
     const col   = range.getColumn();
     const row   = range.getRow();
 
+    // COL_STATUS + 1 karena getColumn() adalah 1-indexed
     if (col !== CONFIG.COL_STATUS + 1) return;
     if (row <= 1) return;
 
     const newValue = range.getValue().toString().toLowerCase().trim();
     if (newValue !== 'active') return;
 
+    // Ambil email dari kolom B (COL_EMAIL + 1)
     const emailCell = sheet.getRange(row, CONFIG.COL_EMAIL + 1);
     const userEmail = emailCell.getValue().toString().trim();
 
@@ -144,11 +153,15 @@ function onStatusChange(e) {
 
     sendActivationEmail(userEmail);
 
+    // Catat di kolom Catatan Admin (COL_STATUS + 2)
     sheet.getRange(row, CONFIG.COL_STATUS + 2).setValue(
         'Email aktivasi dikirim: ' + new Date().toLocaleString('id-ID')
     );
 }
 
+// ============================================================
+//  EMAIL AKTIVASI
+// ============================================================
 function sendActivationEmail(userEmail) {
     const subject = '✅ Akun ChloroWave Kamu Sudah Aktif!';
 
@@ -202,15 +215,15 @@ Terima kasih sudah mendukung ChloroWave! 🎵
 }
 
 // ============================================================
-//  TEST — jalankan manual dari editor
+//  TEST — jalankan manual dari editor untuk debugging
 // ============================================================
 function testRegister() {
-    const result = registerUser('test@gmail.com', 'https://threads.net/test', 'TRF123');
+    const result = registerUser('test@gmail.com', 'Link Sosmed', 'Code Ref');
     Logger.log(JSON.stringify(result));
 }
 
 function testCheckWhitelist() {
-    const result = checkWhitelist('test@gmail.com');
+    const result = checkWhitelist('cs.bluegrayink@gmail.com');
     Logger.log(JSON.stringify(result));
 }
 
