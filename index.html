@@ -25,7 +25,7 @@
         <div class="landing-content">
             <div class="logo-wrap">
                 <div class="logo-icon">
-                    <img src="logo(Black).png" alt="ChloroWave Logo" class="logo-fa-icon">
+                    <img src="logo.png" alt="ChloroWave Logo" class="logo-fa-icon">
                 </div>
                 <div>
                     <h1 class="logo-name">ChloroWave</h1>
@@ -34,13 +34,13 @@
             </div>
 
             <div class="hero-text">
-                <h2>Musik dari Google Drive<br>kamu, langsung diputar.</h2>
+                <h2>Musik dari Google Drive kamu<br>langsung diputar.</h2>
                 <p>Tidak ada iklan. Tidak ada biaya tersembunyi.<br>Cukup bayar sekali untuk aktivasi.</p>
             </div>
 
             <div class="landing-features">
                 <div class="feature-pill">Streaming dari Drive pribadi</div>
-                <div class="feature-pill">Login langsung via Google</div>
+                <div class="feature-pill">Login aman via Google</div>
             </div>
 
             <div class="landing-actions">
@@ -76,11 +76,26 @@
             </div>
 
             <!-- Info Pembayaran -->
+            <div class="payment-card">
+                <div class="payment-card-label">Transfer ke</div>
+                <div class="payment-amount">Serelanya</div>
+                <div class="payment-methods">
+                    <span class="payment-badge">QRIS</span>
+                    <span class="payment-badge">DANA</span>
+                    <span class="payment-badge">Transfer Bank</span>
+                </div>
+                <div class="payment-number">
+                    <!-- Ganti dengan nomor rekening/QRIS kamu -->
+                    DANA / QRIS: <strong>0812-XXXX-XXXX</strong>
+                </div>
+                <p class="payment-note">Setelah transfer, simpan nomor referensi transaksinya.</p>
+            </div>
+
             <form id="reg-form" class="reg-form">
                 <div class="field-group">
                     <label for="f-email">Email Gmail</label>
                     <div class="email-input-wrap">
-                        <input type="text" id="f-email" placeholder="email" required
+                        <input type="text" id="f-email" placeholder="namakamu" required
                                autocomplete="username" autocapitalize="none" spellcheck="false">
                         <span class="email-suffix">@gmail.com</span>
                     </div>
@@ -89,20 +104,21 @@
 
                 <div class="field-group">
                     <label for="f-share">Link Share di Sosmed</label>
-                    <input type="url" id="f-share" placeholder="link share" required>
+                    <input type="url" id="f-share" placeholder="https://threads.net/p/..." required>
                     <span class="field-hint">Share postingan tentang ChloroWave di Threads / IG / Twitter</span>
                 </div>
 
                 <div class="field-group">
-                    <label for="f-ref">Qris ChloroWave</label>
-                    <img src="qrisCW20.png" alt="Qris ChloroWave">
+                    <label for="f-ref">Nomor Referensi Transaksi</label>
+                    <input type="text" id="f-ref" placeholder="Contoh: TRF2024XXXXX atau No. ref QRIS" required>
+                    <span class="field-hint">Tertera di bukti transfer / riwayat transaksi kamu</span>
                 </div>
 
                 <div id="reg-error" class="error-msg hidden"></div>
 
                 <button type="submit" class="btn-primary full-width" id="reg-submit-btn">
                     <span id="reg-btn-text">Kirim Pendaftaran</span>
-                    <span id="reg-btn-loader" class="btn-loader hidden">⏳</span>
+                    <span id="reg-btn-loader" class="btn-loader hidden"></span>
                 </button>
             </form>
         </div>
@@ -114,6 +130,7 @@
     ======================== -->
     <div id="screen-pending" class="screen hidden">
         <div class="page-wrap centered">
+            <div class="pending-icon">⏳</div>
             <h2>Pendaftaran Diterima!</h2>
             <p>Data kamu sedang diverifikasi oleh tim kami.</p>
             <div class="pending-info-card">
@@ -144,9 +161,10 @@
         <div id="app">
             <header>
                 <div class="header-logo">
-                    <img src="logo(Black).png" alt="ChloroWave Logo" class="header-fa-icon">
+                    <img src="logo.png" alt="ChloroWave Logo" class="header-fa-icon">
                     <span>ChloroWave</span>
                 </div>
+
                 <div id="auth-section">
                     <div id="user-profile">
                         <div class="user-info" onclick="toggleUserMenu()">
@@ -227,6 +245,7 @@
     ======================== -->
     <div id="modal-denied" class="modal-overlay hidden">
         <div class="modal-content">
+            <div class="modal-icon">🚫</div>
             <h3>Akses Ditolak</h3>
             <p>Email <strong id="denied-email"></strong> belum terdaftar atau masih dalam proses verifikasi.</p>
             <div class="modal-actions">
