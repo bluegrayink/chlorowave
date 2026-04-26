@@ -25,7 +25,7 @@
         <div class="landing-content">
             <div class="logo-wrap">
                 <div class="logo-icon">
-                    <img src="logo(Black).png" alt="ChloroWave Logo" class="logo-fa-icon">
+<i class="fa-solid fa-record-vinyl logo-fa-icon"></i>
                 </div>
                 <div>
                     <h1 class="logo-name">ChloroWave</h1>
@@ -34,7 +34,7 @@
             </div>
 
             <div class="hero-text">
-                <h2>Musik dari Google Drive kamu<br>langsung diputar.</h2>
+                <h2>Musik dari Google Drive<br>kamu, langsung diputar.</h2>
                 <p>Tidak ada iklan. Tidak ada biaya tersembunyi.<br>Cukup bayar sekali untuk aktivasi.</p>
             </div>
 
@@ -78,7 +78,7 @@
             <!-- Info Pembayaran -->
             <div class="payment-card">
                 <div class="payment-card-label">Transfer ke</div>
-                <div class="payment-amount">Serelanya</div>
+                <div class="payment-amount">Serelanya 🙏</div>
                 <div class="payment-methods">
                     <span class="payment-badge">QRIS</span>
                     <span class="payment-badge">DANA</span>
@@ -161,7 +161,7 @@
         <div id="app">
             <header>
                 <div class="header-logo">
-                    <img src="logo(Black).png" alt="ChloroWave Logo" class="header-fa-icon">
+<i class="fa-solid fa-record-vinyl header-fa-icon"></i>
                     <span>ChloroWave</span>
                 </div>
 
@@ -285,48 +285,65 @@
     <div id="modal-guide" class="modal-overlay hidden">
         <div class="modal-content modal-guide-content">
             <div class="guide-header">
-                <h3>Panduan Login Pertama Kali</h3>
-                <button class="guide-close" onclick="closeModal('modal-guide')">✕</button>
+                <div>
+                    <h3>Panduan Login Pertama Kali</h3>
+                    <p style="color:var(--text-muted);font-size:0.8rem;margin:4px 0 0">Ikuti 3 langkah berikut</p>
+                </div>
+                <button class="guide-close" onclick="closeModal('modal-guide')"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <p class="guide-intro">Saat login pertama kali, Google akan menampilkan peringatan keamanan. Ini normal untuk aplikasi yang belum diverifikasi secara resmi. Ikuti langkah berikut:</p>
+            <div class="guide-warning-box">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div>
+                    <strong>Kenapa ada peringatan dari Google?</strong>
+                    <p>ChloroWave sedang dalam proses verifikasi resmi. Peringatan ini <em>bukan tanda bahaya</em> — app ini hanya membaca file audio di folder <code>chlorowave</code> milikmu.</p>
+                </div>
+            </div>
 
             <div class="guide-steps">
                 <div class="guide-step">
                     <div class="step-num">1</div>
                     <div class="step-body">
-                        <strong>Klik "Advanced"</strong>
-                        <p>Di bagian bawah kiri layar peringatan, klik teks <em>"Advanced"</em>.</p>
+                        <strong>Pilih akun Gmail kamu</strong>
+                        <p>Saat popup Google muncul, pilih akun Gmail yang sudah didaftarkan.</p>
+                        <div class="step-img-placeholder">
+                            <i class="fa-brands fa-google" style="font-size:1.5rem;color:#4285F4"></i>
+                            <span>Pilih akun → klik nama/email kamu</span>
+                        </div>
                     </div>
                 </div>
                 <div class="guide-step">
                     <div class="step-num">2</div>
                     <div class="step-body">
-                        <strong>Klik "Go to ChloroWave (unsafe)"</strong>
-                        <p>Teks ini akan muncul di bawah setelah klik Advanced. Klik untuk melanjutkan.</p>
+                        <strong>Klik <em>"Advanced"</em></strong>
+                        <p>Di halaman peringatan Google, klik teks <strong>"Advanced"</strong> di pojok kiri bawah.</p>
+                        <div class="step-img-placeholder">
+                            <i class="fa-solid fa-triangle-exclamation" style="color:#f5a623"></i>
+                            <span>Google hasn't verified this app → klik <strong>Advanced</strong></span>
+                        </div>
                     </div>
                 </div>
                 <div class="guide-step">
                     <div class="step-num">3</div>
                     <div class="step-body">
-                        <strong>Klik "Allow"</strong>
-                        <p>Izinkan ChloroWave mengakses Google Drive kamu (read-only, hanya baca).</p>
-                    </div>
-                </div>
-                <div class="guide-step">
-                    <div class="step-num">4</div>
-                    <div class="step-body">
-                        <strong>Selesai!</strong>
-                        <p>Login berikutnya akan langsung masuk tanpa peringatan ini lagi.</p>
+                        <strong>Klik <em>"Go to ChloroWave"</em> lalu <em>"Allow"</em></strong>
+                        <p>Klik teks yang muncul di bawah, lalu klik <strong>Allow</strong> untuk izinkan akses Drive.</p>
+                        <div class="step-img-placeholder">
+                            <i class="fa-solid fa-check-circle" style="color:var(--green)"></i>
+                            <span>Go to ChloroWave (unsafe) → Allow → <strong>Selesai!</strong></span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="guide-note">
-                <strong>Kenapa ada peringatan ini?</strong> ChloroWave sedang dalam proses verifikasi resmi oleh Google. Peringatan ini bukan tanda bahaya — aplikasi ini aman dan hanya membaca file audio di folder <code>chlorowave</code> di Drive kamu.
+            <div class="guide-footer-note">
+                <i class="fa-solid fa-rotate-left"></i>
+                Login berikutnya langsung masuk — peringatan ini hanya muncul <strong>sekali</strong>.
             </div>
 
-            <button class="btn-primary" onclick="closeModal('modal-guide')" style="width:100%;margin-top:20px">Mengerti, Lanjutkan</button>
+            <button class="btn-primary" onclick="closeModal('modal-guide')" style="width:100%;margin-top:16px">
+                <i class="fa-solid fa-arrow-right"></i> Mengerti, Lanjutkan Login
+            </button>
         </div>
     </div>
 
