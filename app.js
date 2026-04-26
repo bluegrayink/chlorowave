@@ -207,7 +207,7 @@ function onLoginSuccess(user) {
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
-    document.getElementById('username-display').textContent = name;
+    document.getElementById('username-display').textContent = '👤 ' + name;
 }
 
 function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
@@ -266,14 +266,17 @@ async function fetchSongsFromDrive() {
 
         if (!folderData.files || folderData.files.length === 0) {
             listEl.innerHTML = `
-                <li class="playlist-error" style="line-height:1.8">
-                    ⚠️ Folder <strong>'chlorowave'</strong> tidak ditemukan di Google Drive kamu.<br><br>
-                    Cara membuat:<br>
-                    1. Buka <a href="https://drive.google.com" target="_blank" style="color:var(--green)">Google Drive</a><br>
-                    2. Klik <strong>+ New → Folder</strong><br>
-                    3. Beri nama persis: <strong>chlorowave</strong> (huruf kecil semua)<br>
-                    4. Upload lagu ke folder tersebut<br>
-                    5. Refresh halaman ini
+                <li class="folder-not-found">
+                    <div class="fnf-icon"><i class="fa-solid fa-folder-open"></i></div>
+                    <div class="fnf-title">Folder tidak ditemukan</div>
+                    <div class="fnf-desc">Buat folder <code>chlorowave</code> di Google Drive kamu, lalu upload lagu ke dalamnya.</div>
+                    <div class="fnf-steps">
+                        <div class="fnf-step"><span class="fnf-num">1</span><span>Buka <a href="https://drive.google.com" target="_blank">Google Drive</a></span></div>
+                        <div class="fnf-step"><span class="fnf-num">2</span><span>Klik <strong>+ New</strong> → <strong>Folder</strong></span></div>
+                        <div class="fnf-step"><span class="fnf-num">3</span><span>Beri nama persis: <code>chlorowave</code></span></div>
+                        <div class="fnf-step"><span class="fnf-num">4</span><span>Upload lagu ke folder tersebut</span></div>
+                        <div class="fnf-step"><span class="fnf-num">5</span><span>Klik tombol <strong>Refresh</strong> di atas</span></div>
+                    </div>
                 </li>`;
             return;
         }
@@ -385,7 +388,7 @@ function trackHTML(idx, song) {
                 <span class="track-name">${sanitize(parsed.title || name)}</span>
                 ${parsed.artist ? `<span class="track-artist">${sanitize(parsed.artist)}</span>` : ''}
             </div>
-            <span class="track-icon" id="bar-${idx}"></span>
+            <span class="track-icon" id="bar-${idx}">♪</span>
         </li>`;
 }
 
