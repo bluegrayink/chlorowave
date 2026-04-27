@@ -1660,13 +1660,15 @@ audio {
 
 /* Logo image */
 .logo-img {
-    height: 36px;
-    width: auto;
+    height: 40px;
+    width: 40px;
     object-fit: contain;
+    border-radius: 8px;
 }
 
 .logo-img-sm {
-    height: 24px;
-    width: auto;
+    height: 26px;
+    width: 26px;
     object-fit: contain;
+    border-radius: 6px;
 }
