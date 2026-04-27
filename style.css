@@ -1657,3 +1657,16 @@ audio {
 }
 
 .guide-footer-note > i { color: var(--green); }
+
+/* Logo image */
+.logo-img {
+    height: 36px;
+    width: auto;
+    object-fit: contain;
+}
+
+.logo-img-sm {
+    height: 24px;
+    width: auto;
+    object-fit: contain;
+}
