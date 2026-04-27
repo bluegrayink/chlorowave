@@ -36,8 +36,13 @@ function doGet(e) {
             result = checkWhitelist(e.parameter.email);
         } else if (action === 'register') {
             result = registerUser(e.parameter.email, e.parameter.shareUrl, e.parameter.refNum);
+        } else if (action === 'paymentWebhook') {
+            result = handlePaymentWebhook(e);
         } else if (action === 'songRequest') {
             result = logSongRequest(e.parameter.song, e.parameter.email);
+        } else if (action === 'paymentWebhook') {
+            // Webhook dari Temanqris via GET (fallback)
+            result = { ok: true, msg: 'Use POST for webhook' };
         } else {
             result = { ok: true, msg: 'ChloroWave API running' };
         }
@@ -48,6 +53,169 @@ function doGet(e) {
     }
 
     return output;
+}
+
+// ============================================================
+//  POST HANDLER — untuk webhook POST dari Temanqris
+// ============================================================
+function doPost(e) {
+    const output = ContentService.createTextOutput();
+    output.setMimeType(ContentService.MimeType.JSON);
+
+    try {
+        const body = JSON.parse(e.postData.contents);
+        const result = processPaymentWebhook(body);
+        output.setContent(JSON.stringify(result));
+    } catch (err) {
+        output.setContent(JSON.stringify({ error: err.message }));
+    }
+
+    return output;
+}
+
+// ============================================================
+//  FUNGSI WEBHOOK: Proses notifikasi pembayaran dari Temanqris
+// ============================================================
+function handlePaymentWebhook(e) {
+    // Untuk GET request (fallback)
+    return { ok: true, msg: 'Use POST for webhook' };
+}
+
+function processPaymentWebhook(body) {
+    // Body dari Temanqris: { event, order_id, amount, description, status, ... }
+    // description berisi: "ChloroWave-email@gmail.com"
+
+    const description = body.description || '';
+    const status      = body.status      || '';
+    const amount      = body.amount      || 0;
+
+    // Ekstrak email dari description
+    const emailMatch = description.match(/ChloroWave-(.+)/);
+    if (!emailMatch) return { ok: false, reason: 'email_not_found_in_description' };
+
+    const email = emailMatch[1].trim().toLowerCase();
+
+    // Validasi pembayaran
+    if (status !== 'paid' && status !== 'confirmed' && status !== 'settlement') {
+        return { ok: false, reason: 'payment_not_confirmed', status };
+    }
+
+    // Update status di Sheet jadi 'paid' (menunggu verifikasi link share)
+    const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID)
+        .getSheetByName(CONFIG.SHEET_NAME);
+
+    if (!sheet) return { ok: false, reason: 'sheet_not_found' };
+
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+        const rowEmail = (data[i][CONFIG.COL_EMAIL] || '').toString().toLowerCase().trim();
+        if (rowEmail === email) {
+            // Update kolom catatan admin dengan info pembayaran
+            sheet.getRange(i + 1, CONFIG.COL_STATUS + 2).setValue(
+                `Bayar via QRIS: Rp${amount} — ${new Date().toLocaleString('id-ID')}`
+            );
+            // Kirim notif ke admin
+            notifyAdmin(email, amount);
+            return { ok: true, email };
+        }
+    }
+
+    return { ok: false, reason: 'email_not_registered' };
+}
+
+function notifyAdmin(email, amount) {
+    try {
+        GmailApp.sendEmail(
+            CONFIG.ADMIN_EMAIL,
+            `💰 Pembayaran ChloroWave — ${email}`,
+            `Ada pembayaran QRIS masuk!
+
+Email: ${email}
+Nominal: Rp${amount}
+
+Silakan verifikasi link share dan ubah status menjadi "active" di Google Sheet.`,
+            { name: 'ChloroWave System' }
+        );
+    } catch(e) { /* silent fail */ }
+}
+
+// ============================================================
+//  POST HANDLER — Temanqris Webhook
+// ============================================================
+function doPost(e) {
+    const output = ContentService.createTextOutput();
+    output.setMimeType(ContentService.MimeType.JSON);
+
+    try {
+        const payload = JSON.parse(e.postData.contents);
+        const event   = payload.event || '';
+        const desc    = payload.description || payload.order_description || '';
+        const status  = payload.status || '';
+        const amount  = payload.amount || 0;
+
+        // Cek event pembayaran berhasil
+        const isPaid = event === 'payment.confirmed' ||
+                       event === 'payment.success' ||
+                       status === 'confirmed' ||
+                       status === 'success';
+
+        if (!isPaid) {
+            output.setContent(JSON.stringify({ ok: true, msg: 'Event ignored: ' + event }));
+            return output;
+        }
+
+        // Cek nominal — harus >= 20000
+        if (amount < 20000) {
+            output.setContent(JSON.stringify({ ok: false, reason: 'amount_too_low' }));
+            return output;
+        }
+
+        // Ekstrak email dari description (format: "ChloroWave-email@gmail.com")
+        const emailMatch = desc.match(/ChloroWave-(.+@gmail\.com)/i);
+        if (!emailMatch) {
+            output.setContent(JSON.stringify({ ok: false, reason: 'email_not_found_in_description' }));
+            return output;
+        }
+
+        const email = emailMatch[1].toLowerCase().trim();
+
+        // Update status di Sheet jadi 'active'
+        const result = activateUser(email);
+        output.setContent(JSON.stringify(result));
+
+    } catch (err) {
+        output.setContent(JSON.stringify({ error: err.message }));
+    }
+
+    return output;
+}
+
+// ============================================================
+//  Aktifkan user — ubah status pending → active + kirim email
+// ============================================================
+function activateUser(email) {
+    const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID)
+        .getSheetByName(CONFIG.SHEET_NAME);
+
+    if (!sheet) return { ok: false, reason: 'sheet_not_found' };
+
+    const data = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < data.length; i++) {
+        const rowEmail = (data[i][CONFIG.COL_EMAIL] || '').toString().toLowerCase().trim();
+        if (rowEmail === email) {
+            // Update status jadi active
+            sheet.getRange(i + 1, CONFIG.COL_STATUS + 1).setValue('active');
+            sheet.getRange(i + 1, CONFIG.COL_STATUS + 2).setValue(
+                'Auto-aktivasi via QRIS: ' + new Date().toLocaleString('id-ID')
+            );
+            // Kirim email aktivasi
+            sendActivationEmail(email);
+            return { ok: true, email, activated: true };
+        }
+    }
+
+    return { ok: false, reason: 'email_not_found' };
 }
 
 // ============================================================
@@ -218,7 +386,7 @@ Terima kasih sudah mendukung ChloroWave! 🎵
 //  TEST — jalankan manual dari editor untuk debugging
 // ============================================================
 function testRegister() {
-    const result = registerUser('test@gmail.com', 'Link Sosmed', 'Code Ref');
+    const result = registerUser('test@gmail.com', 'https://threads.net/test', 'TRF123');
     Logger.log(JSON.stringify(result));
 }
 
