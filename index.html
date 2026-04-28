@@ -97,21 +97,10 @@
 
                     <div id="reg-error" class="error-msg hidden"></div>
 
-                    <div id="qr-widget-container" class="qr-widget-container">
-                    <!-- Widget Temanqris di-inject via JS -->
-                    </div>
-
-                    <div class="qr-note">
-                    <i class="fa-solid fa-circle-info"></i>
-                    Setelah bayar, klik <strong>"Sudah Bayar"</strong> di widget. 
-                    Akun akan diverifikasi tim kami dalam 1×24 jam.
-                    </div>
-
-                    <div class="qr-note">
-                    <i class="fa-solid fa-circle-info"></i>
-                    Setelah bayar, klik <strong>"Sudah Bayar"</strong> di widget. 
-                    Akun akan diverifikasi tim kami dalam 1×24 jam.
-                </div>
+                    <button type="submit" class="btn-primary full-width" id="reg-submit-btn">
+                        <span id="reg-btn-text">Lanjut ke Pembayaran</span>
+                        <span id="reg-btn-loader" class="btn-loader hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                    </button>
                 </form>
             </div>
 
@@ -125,6 +114,16 @@
 
                 <div class="qr-amount-badge">
                     <i class="fa-solid fa-tag"></i> Rp 20.000
+                </div>
+
+                <div id="qr-widget-container" class="qr-widget-container">
+                    <!-- Widget Temanqris di-inject via JS -->
+                </div>
+
+                <div class="qr-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Setelah bayar, klik <strong>"Sudah Bayar"</strong> di widget. 
+                    Akun akan diverifikasi tim kami dalam 1×24 jam.
                 </div>
 
                 <button class="btn-ghost" onclick="backToStep1()" style="width:100%;margin-top:12px">
