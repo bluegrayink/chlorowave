@@ -347,5 +347,70 @@
     <script src="https://temanqris.com/widget.js" defer></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="app.js"></script>
+    <script>
+        // Konfigurasi URL Apps Script kamu
+const WEB_APP_URL = 'URL_DEPLOYMENT_GOOGLE_APPS_SCRIPT_KAMU';
+
+// 1. Fungsi supaya QR Code update saat user ngetik email
+const emailInput = document.getElementById('f-email');
+emailInput.addEventListener('blur', updateQR); // Update saat user selesai ngetik/pindah kolom
+
+function updateQR() {
+    const userEmail = emailInput.value.trim();
+    if (!userEmail) return;
+
+    const fullEmail = userEmail + '@gmail.com';
+    const container = document.getElementById('qr-widget-container');
+
+    // Link Iframe Temanqris - Sesuaikan ID (USER_ID_KAMU)
+    // Format desc: ChloroWave-email@gmail.com (Harus sama dengan regex di Apps Script)
+    const temanQrisUrl = `https://temanqris.com/widget?id=USER_ID_KAMU&amount=20000&desc=ChloroWave-${fullEmail}`;
+
+    container.innerHTML = `
+        <iframe src="${temanQrisUrl}" 
+                style="width:100%; height:400px; border:none; border-radius:12px; background:white;">
+        </iframe>`;
+}
+
+// 2. Handle Submit Form (Kirim ke Google Sheets)
+document.getElementById('reg-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('reg-submit-btn');
+    const loader = document.getElementById('reg-btn-loader');
+    const btnText = document.getElementById('reg-btn-text');
+    
+    const email = document.getElementById('f-email').value.trim() + '@gmail.com';
+    const shareLink = document.getElementById('f-share').value.trim();
+
+    // Loading State
+    btn.disabled = true;
+    loader.classList.remove('hidden');
+    btnText.innerText = "Mengirim...";
+
+    // Kirim action 'register' ke Apps Script
+    const finalUrl = `${WEB_APP_URL}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareLink)}`;
+
+    fetch(finalUrl)
+        .then(res => res.json())
+        .then(data => {
+            if (data.ok) {
+                alert('Data berhasil dikirim! Tim kami akan memverifikasi pembayaran dan link share kamu dalam 1x24 jam.');
+                location.reload(); // Refresh atau balik ke landing
+            } else {
+                alert('Waduh! Gagal kirim data: ' + data.reason);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Terjadi kesalahan koneksi.');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            loader.classList.add('hidden');
+            btnText.innerText = "Saya Sudah Bayar & Kirim Data";
+        });
+});
+    </script>
 </body>
 </html>
