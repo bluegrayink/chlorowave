@@ -75,8 +75,30 @@
             <p>Isi data dan selesaikan pembayaran untuk mengaktifkan akses musik.</p>
         </div>
 
-        <div id="qr-widget-container" class="qr-widget-container" style="margin-top: 20px;">
+        <form id="reg-form" class="reg-form">
+    <div class="field-group">
+        <label for="f-email">Email Gmail</label>
+        <div class="email-input-wrap">
+            <input type="text" id="f-email" placeholder="namakamu" required>
+            <span class="email-suffix">@gmail.com</span>
         </div>
+    </div>
+
+    <div class="field-group">
+        <label for="f-share">Link Share Sosmed</label>
+        <input type="url" id="f-share" placeholder="https://..." required>
+    </div>
+
+    <div id="qr-widget-container" class="qr-widget-container" style="margin-top: 20px;">
+        </div>
+
+    <button type="submit" class="btn-primary full-width" id="reg-submit-btn" style="margin-top: 20px;">
+        <span id="reg-btn-text">Saya Sudah Bayar & Kirim Data</span>
+        <span id="reg-btn-loader" class="btn-loader hidden">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+        </span>
+    </button>
+</form>
     </div>
 </div>
 
