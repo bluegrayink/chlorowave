@@ -98,11 +98,8 @@ window.addEventListener('load', async () => {
 });
 
 // ============================================================
-//  REGISTRASI
+//  REGISTRASI (Versi 1 Langkah)
 // ============================================================
-// Simpan data registrasi sementara
-let regData = { email: '', shareUrl: '' };
-
 document.getElementById('reg-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errEl     = document.getElementById('reg-error');
@@ -110,6 +107,7 @@ document.getElementById('reg-form').addEventListener('submit', async (e) => {
     const btnLoad   = document.getElementById('reg-btn-loader');
     const submitBtn = document.getElementById('reg-submit-btn');
 
+    // Ambil data email
     const prefix   = document.getElementById('f-email').value.trim().toLowerCase().replace(/@.*/, '');
     const email    = prefix + '@gmail.com';
     const shareUrl = document.getElementById('f-share').value.trim();
@@ -117,79 +115,61 @@ document.getElementById('reg-form').addEventListener('submit', async (e) => {
     if (!prefix) { showError(errEl, 'Masukkan nama akun Gmail kamu'); return; }
     if (!shareUrl) { showError(errEl, 'Masukkan link share sosmed kamu'); return; }
 
-    btnText.textContent = 'Memproses...';
+    btnText.textContent = 'Mengirim Data...';
     btnLoad.classList.remove('hidden');
     submitBtn.disabled = true;
     errEl.classList.add('hidden');
 
     try {
-        // Simpan data ke GAS dulu dengan status 'waiting_payment'
-        const url  = `${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=QRIS-PENDING`;
+        // Langsung simpan ke GAS (Google Apps Script)
+        // refNum kita isi dengan timestamp agar unik
+        const refNum = 'CW-' + Date.now();
+        const url  = `${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=${refNum}`;
+        
         const res  = await fetch(url);
         const data = await res.json();
+        
         if (!data.ok) throw new Error('Server menolak data');
 
-        // Simpan sementara untuk dipakai di QR
-        regData = { email, shareUrl };
-        localStorage.setItem('cw_reg_email',    email);
-        localStorage.setItem('cw_reg_shareUrl', shareUrl);
+        // Berhasil simpan data ke Sheet
+        localStorage.setItem('cw_status', 'pending');
+        localStorage.setItem('cw_email',  email);
 
-        // Pindah ke step 2 — tampilkan QR
-        showRegStep(2);
-        initTemanqrisWidget(email);
+        alert('Pendaftaran Berhasil!\n\nData kamu sudah masuk ke sistem. Pastikan kamu sudah membayar via QRIS. Akun kamu akan aktif otomatis dalam 1x24 jam.');
+        
+        // Arahkan ke layar pending
+        document.getElementById('pending-email-display').textContent = email;
+        showScreen('screen-pending');
 
     } catch (err) {
-        showError(errEl, 'Gagal memproses. Coba lagi beberapa saat.');
+        showError(errEl, 'Gagal terhubung ke server. Pastikan internet lancar.');
     } finally {
-        btnText.textContent = 'Lanjut ke Pembayaran';
+        btnText.textContent = 'Saya Sudah Bayar & Kirim Data';
         btnLoad.classList.add('hidden');
         submitBtn.disabled = false;
     }
 });
 
-function showRegStep(step) {
-    document.getElementById('reg-step-1').classList.toggle('hidden', step !== 1);
-    document.getElementById('reg-step-2').classList.toggle('hidden', step !== 2);
-}
-
-function backToStep1() {
-    showRegStep(1);
-    document.getElementById('qr-widget-container').innerHTML = '';
-}
-
-function initTemanqrisWidget(email) {
-    const container = document.getElementById('qr-widget-container');
-    container.innerHTML = '';
-
-    // Buat script tag Temanqris widget dinamis
-    const script = document.createElement('script');
-    script.src = 'https://temanqris.com/widget.js';
-    script.setAttribute('data-merchant',     CONFIG.TEMANQRIS_MERCHANT);
-    script.setAttribute('data-amount',       CONFIG.TEMANQRIS_AMOUNT);
-    script.setAttribute('data-button-text',  'Bayar dengan QRIS');
-    script.setAttribute('data-button-color', '#1DB954');
-    script.setAttribute('data-description',  `ChloroWave-${email}`);
-    script.setAttribute('data-callback',     `${window.location.origin}${window.location.pathname}?payment=success&email=${encodeURIComponent(email)}`);
-    script.setAttribute('data-webhook',      `${CONFIG.GAS_ENDPOINT}?action=paymentWebhook`);
-    container.appendChild(script);
-}
-
-// Cek apakah callback dari payment berhasil
-window.addEventListener('load', () => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('payment') === 'success') {
-        const email = params.get('email');
-        if (email) {
-            localStorage.setItem('cw_status', 'pending');
-            localStorage.setItem('cw_email',  email);
-            // Bersihkan URL
-            window.history.replaceState({}, '', window.location.pathname);
-        }
+// Fungsi untuk memunculkan QRIS saat user mengetik email
+document.getElementById('f-email').addEventListener('blur', () => {
+    const prefix = document.getElementById('f-email').value.trim().toLowerCase();
+    if (prefix) {
+        initTemanqrisWidget(prefix + '@gmail.com');
     }
 });
 
-function showError(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
+function initTemanqrisWidget(email) {
+    const container = document.getElementById('qr-widget-container');
+    container.innerHTML = ''; // Bersihkan
 
+    // Gunakan Iframe supaya lebih stabil di halaman yang sama
+    const temanQrisUrl = `https://temanqris.com/p/6GM6YFZZ?amount=20000&description=ChloroWave-${email}`;
+    
+    container.innerHTML = `
+        <iframe src="${temanQrisUrl}" 
+            style="width:100%; height:450px; border:none; border-radius:12px; background:white;">
+        </iframe>`;
+}
 // ============================================================
 //  LOGIN
 // ============================================================
