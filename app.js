@@ -106,8 +106,6 @@ let regData = { email: '', shareUrl: '' };
 document.getElementById('reg-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errEl     = document.getElementById('reg-error');
-    const btnText   = document.getElementById('reg-btn-text');
-    const btnLoad   = document.getElementById('reg-btn-loader');
     const submitBtn = document.getElementById('reg-submit-btn');
 
     const prefix   = document.getElementById('f-email').value.trim().toLowerCase().replace(/@.*/, '');
@@ -117,62 +115,44 @@ document.getElementById('reg-form').addEventListener('submit', async (e) => {
     if (!prefix) { showError(errEl, 'Masukkan nama akun Gmail kamu'); return; }
     if (!shareUrl) { showError(errEl, 'Masukkan link share sosmed kamu'); return; }
 
-    btnText.textContent = 'Memproses...';
-    btnLoad.classList.remove('hidden');
-    submitBtn.disabled = true;
     errEl.classList.add('hidden');
 
-    try {
-        // Simpan data ke GAS dulu dengan status 'waiting_payment'
-        const url  = `${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=QRIS-PENDING`;
-        const res  = await fetch(url);
-        const data = await res.json();
-        if (!data.ok) throw new Error('Server menolak data');
+    // Simpan data
+    regData = { email, shareUrl };
+    localStorage.setItem('cw_reg_email',    email);
+    localStorage.setItem('cw_reg_shareUrl', shareUrl);
 
-        // Simpan sementara untuk dipakai di QR
-        regData = { email, shareUrl };
-        localStorage.setItem('cw_reg_email',    email);
-        localStorage.setItem('cw_reg_shareUrl', shareUrl);
+    // Inject widget Temanqris — tombol QRIS muncul di bawah form
+    initTemanqrisWidget(email, shareUrl);
 
-        // Pindah ke step 2 — tampilkan QR
-        showRegStep(2);
-        initTemanqrisWidget(email);
+    // Sembunyikan tombol submit, ganti dengan info
+    submitBtn.style.display = 'none';
+    document.getElementById('f-email').disabled = true;
+    document.getElementById('f-share').disabled = true;
 
-    } catch (err) {
-        showError(errEl, 'Gagal memproses. Coba lagi beberapa saat.');
-    } finally {
-        btnText.textContent = 'Lanjut ke Pembayaran';
-        btnLoad.classList.add('hidden');
-        submitBtn.disabled = false;
-    }
+    const info = document.createElement('p');
+    info.className = 'reg-footer-note';
+    info.style.color = 'var(--green)';
+    info.innerHTML = '<i class="fa-solid fa-check-circle"></i> Data tersimpan. Klik tombol di bawah untuk bayar.';
+    submitBtn.parentNode.insertBefore(info, submitBtn);
 });
 
-function showRegStep(step) {
-    document.getElementById('reg-step-1').classList.toggle('hidden', step !== 1);
-    document.getElementById('reg-step-2').classList.toggle('hidden', step !== 2);
-}
-
-function backToStep1() {
-    showRegStep(1);
-    document.getElementById('qr-widget-container').innerHTML = '';
-}
-
-function initTemanqrisWidget(email) {
+function initTemanqrisWidget(email, shareUrl) {
     const container = document.getElementById('qr-widget-container');
     container.innerHTML = '';
 
-    // Buat script tag Temanqris widget dinamis
     const script = document.createElement('script');
     script.src = 'https://temanqris.com/widget.js';
     script.setAttribute('data-merchant',     CONFIG.TEMANQRIS_MERCHANT);
     script.setAttribute('data-amount',       CONFIG.TEMANQRIS_AMOUNT);
-    script.setAttribute('data-button-text',  'Bayar dengan QRIS');
+    script.setAttribute('data-button-text',  'Bayar Rp 20.000 dengan QRIS');
     script.setAttribute('data-button-color', '#1DB954');
-    script.setAttribute('data-description',  `ChloroWave-${email}`);
-    script.setAttribute('data-callback',     `${window.location.origin}${window.location.pathname}?payment=success&email=${encodeURIComponent(email)}`);
-    script.setAttribute('data-webhook',      `${CONFIG.GAS_ENDPOINT}?action=paymentWebhook`);
+    script.setAttribute('data-description',  'ChloroWave-' + email);
+    script.setAttribute('data-callback',     window.location.origin + window.location.pathname + '?payment=success&email=' + encodeURIComponent(email) + '&share=' + encodeURIComponent(shareUrl));
+    script.setAttribute('data-webhook',      CONFIG.GAS_ENDPOINT + '?action=paymentWebhook');
     container.appendChild(script);
 }
+
 
 // Cek apakah callback dari payment berhasil
 window.addEventListener('load', () => {
@@ -188,8 +168,7 @@ window.addEventListener('load', () => {
     }
 });
 
-function showError(el, msg) { el.textContent = msg; el.classList.remove('hidden');
-}
+function showError(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
 
 // ============================================================
 //  LOGIN
