@@ -889,17 +889,3 @@ function updateMediaSessionCover(coverUrl) {
 function sanitize(str) {
     return str.replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
-// ============================================================
-//  MODALS
-// ============================================================
-function closeModal(id) {
-    document.getElementById(id).classList.add('hidden');
-}
-
-function closeModalOutside(event) {
-    // Jika user mengklik modal-overlay itu sendiri (bukan box putih di tengah)
-    if (event.target.id === 'modal-guide') {
-        closeModal('modal-guide');
-    }
-}
