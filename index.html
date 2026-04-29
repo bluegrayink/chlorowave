@@ -10,6 +10,28 @@
     <link rel="manifest" href="manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+/* Memastikan scrollbar terlihat rapi */
+.guide-body-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.guide-body-scroll::-webkit-scrollbar-thumb {
+    background-color: #ddd;
+    border-radius: 10px;
+}
+/* Memastikan konten step tidak terlalu rapat */
+.guide-step { margin-bottom: 20px; display: flex; gap: 15px; }
+.step-img-placeholder { 
+    background: #f0f2f5; 
+    padding: 10px; 
+    border-radius: 6px; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    margin-top: 8px;
+    font-size: 0.85rem;
+}
+</style>
 </head>
 <body>
 
@@ -280,21 +302,25 @@
     </div>
 
     <!-- MODAL: PANDUAN LOGIN -->
-    <div id="modal-guide" class="modal-overlay hidden">
-        <div class="modal-content modal-guide-content">
-            <div class="guide-header">
-                <div>
-                    <h3>Panduan Login Pertama Kali</h3>
-                    <p style="color:var(--text-muted);font-size:0.8rem;margin:4px 0 0">Ikuti 3 langkah berikut</p>
-                </div>
-                <button class="guide-close" onclick="closeModal('modal-guide')"><i class="fa-solid fa-xmark"></i></button>
+    <div id="modal-guide" class="modal-overlay hidden" onclick="closeModalOutside(event)">
+    <div class="modal-content modal-guide-content" 
+         style="max-width: 400px; width: 90%; max-height: 85vh; display: flex; flex-direction: column; padding: 0;">
+        
+        <div class="guide-header" style="padding: 20px; border-bottom: 1px solid #eee;">
+            <div>
+                <h3 style="margin:0">Panduan Login Pertama</h3>
+                <p style="color:var(--text-muted);font-size:0.8rem;margin:4px 0 0">Ikuti 3 langkah berikut</p>
             </div>
+            <button class="guide-close" onclick="closeModal('modal-guide')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
 
+        <div class="guide-body-scroll" style="overflow-y: auto; padding: 20px; flex-grow: 1;">
+            
             <div class="guide-warning-box">
                 <i class="fa-solid fa-shield-halved"></i>
                 <div>
-                    <strong>Kenapa ada peringatan dari Google?</strong>
-                    <p>ChloroWave sedang dalam proses verifikasi resmi. Peringatan ini <em>bukan tanda bahaya</em> — app ini hanya membaca file audio di folder <code>chlorowave</code> milikmu.</p>
+                    <strong>Kenapa ada peringatan?</strong>
+                    <p>ChloroWave sedang verifikasi. Ini <em>bukan bahaya</em> — hanya akses folder <code>chlorowave</code>.</p>
                 </div>
             </div>
 
@@ -302,48 +328,52 @@
                 <div class="guide-step">
                     <div class="step-num">1</div>
                     <div class="step-body">
-                        <strong>Pilih akun Gmail kamu</strong>
-                        <p>Saat popup Google muncul, pilih akun Gmail yang sudah didaftarkan.</p>
+                        <strong>Pilih akun Gmail</strong>
                         <div class="step-img-placeholder">
-                            <i class="fa-brands fa-google" style="font-size:1.5rem;color:#4285F4"></i>
-                            <span>Pilih akun → klik nama/email kamu</span>
+                            <i class="fa-brands fa-google" style="color:#4285F4"></i>
+                            <span>Pilih email yang terdaftar</span>
                         </div>
                     </div>
                 </div>
+
                 <div class="guide-step">
                     <div class="step-num">2</div>
                     <div class="step-body">
                         <strong>Klik <em>"Advanced"</em></strong>
-                        <p>Di halaman peringatan Google, klik teks <strong>"Advanced"</strong> di pojok kiri bawah.</p>
+                        <p>Klik teks <strong>"Advanced"</strong> di pojok kiri bawah layar Google.</p>
                         <div class="step-img-placeholder">
                             <i class="fa-solid fa-triangle-exclamation" style="color:#f5a623"></i>
-                            <span>Google hasn't verified this app → klik <strong>Advanced</strong></span>
+                            <span>Google hasn't verified... → <strong>Advanced</strong></span>
                         </div>
                     </div>
                 </div>
+
                 <div class="guide-step">
                     <div class="step-num">3</div>
                     <div class="step-body">
-                        <strong>Klik <em>"Go to ChloroWave"</em> lalu <em>"Allow"</em></strong>
-                        <p>Klik teks yang muncul di bawah, lalu klik <strong>Allow</strong> untuk izinkan akses Drive.</p>
+                        <strong>Klik <em>"Go to ChloroWave"</em></strong>
+                        <p>Lalu klik <strong>Allow</strong> untuk izinkan akses Drive.</p>
                         <div class="step-img-placeholder">
                             <i class="fa-solid fa-check-circle" style="color:var(--green)"></i>
-                            <span>Go to ChloroWave (unsafe) → Allow → <strong>Selesai!</strong></span>
+                            <span>Go to ChloroWave → <strong>Allow</strong></span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="guide-footer-note">
+            <div class="guide-footer-note" style="margin-top:15px; background: #f8f9fa; padding: 10px; border-radius: 8px; font-size: 0.85rem;">
                 <i class="fa-solid fa-rotate-left"></i>
-                Login berikutnya langsung masuk — peringatan ini hanya muncul <strong>sekali</strong>.
+                Peringatan ini hanya muncul <strong>sekali</strong>.
             </div>
+        </div>
 
-            <button class="btn-primary" onclick="closeModal('modal-guide')" style="width:100%;margin-top:16px">
-                <i class="fa-solid fa-arrow-right"></i> Mengerti, Lanjutkan Login
+        <div style="padding: 15px 20px 20px; border-top: 1px solid #eee;">
+            <button class="btn-primary" onclick="closeModal('modal-guide')" style="width:100%">
+                <i class="fa-solid fa-arrow-right"></i> Mengerti, Lanjutkan
             </button>
         </div>
     </div>
+</div>
 
     <script src="https://temanqris.com/widget.js" defer></script>
     <script src="https://temanqris.com/widget.js" defer></script>
