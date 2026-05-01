@@ -2,21 +2,21 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ChloroWave — Premium Cloud Music</title>
-    
-    <!-- 1. Font & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome (Wajib untuk Ikon) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="qr3BLxiSWRxNZeQZy7u2nuTZxDqCaBmFYatvq0LAr4A" />
+    <title>ChloroWave</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" />
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- SCREEN: LANDING -->
+    <!-- ========================
+         SCREEN 1: LANDING
+         Tampil jika belum punya status apapun
+    ======================== -->
     <div id="screen-landing" class="screen">
         <div class="landing-bg">
             <div class="orb orb-1"></div>
@@ -25,174 +25,342 @@
         <div class="landing-content">
             <div class="logo-wrap">
                 <div class="logo-icon">
-                    <i class="fa-solid fa-bolt-lightning logo-fa-icon"></i>
+<img src="logo-black.png" alt="ChloroWave" class="logo-img">
                 </div>
-                <div class="logo-text">
-                    <div class="logo-name">CHLOROWAVE</div>
-                    <div class="logo-sub">Cloud Music Engine</div>
+                <div>
+                    <h1 class="logo-name">ChloroWave</h1>
+                    <p class="logo-sub">MP3 Player Pribadi</p>
                 </div>
             </div>
+
             <div class="hero-text">
-                <h2>Bawa Koleksi Musikmu Sendiri.</h2>
-                <p>Streaming langsung dari Google Drive dengan kualitas audio lossless tanpa kompresi.</p>
+                <h2>Musik dari Google Drive<br>kamu, langsung diputar.</h2>
+                <p>Tidak ada iklan. Tidak ada biaya tersembunyi.<br>Cukup bayar serelanya untuk aktivasi.</p>
             </div>
+
             <div class="landing-features">
-                <span class="feature-pill">Unlimited Drive</span>
-                <span class="feature-pill">No Ads</span>
-                <span class="feature-pill">Lossless Audio</span>
+                <div class="feature-pill">🎵 Streaming dari Drive pribadi</div>
+                <div class="feature-pill">🔒 Login aman via Google</div>
+                <div class="feature-pill">📱 Bisa install di HP</div>
             </div>
+
             <div class="landing-actions">
-                <button class="btn-primary full-width" onclick="navTo('register')">Mulai Sekarang</button>
-                <button class="btn-ghost" onclick="showGuide()">Bagaimana cara kerjanya?</button>
+                <button class="btn-primary" onclick="showScreen('screen-register')">Daftar Sekarang</button>
+                <button class="btn-ghost" onclick="tryLogin()">Sudah punya akun? Login</button>
+            </div>
+            <button class="btn-link guide-link" onclick="openModal('modal-guide')">
+                ❓ Panduan login pertama kali
+            </button>
+
+            <div class="landing-footer">
+                <a href="./privacy-policy.html" target="_blank">Privacy Policy</a>
+                <span>·</span>
+                <a href="./terms.html" target="_blank">Terms of Service</a>
+                <span>·</span>
+                <span>© 2026 Bluegray Ink</span>
             </div>
         </div>
     </div>
 
-    <!-- SCREEN: REGISTER -->
+    <!-- ========================
+         SCREEN 2: REGISTRASI
+         Form pendaftaran manual
+    ======================== -->
     <div id="screen-register" class="screen hidden">
         <div class="page-wrap">
-            <button class="btn-back" onclick="navTo('landing')">
-                <i class="fa-solid fa-arrow-left"></i> Kembali
-            </button>
+            <button class="btn-back" onclick="showScreen('screen-landing')">← Kembali</button>
+
             <div class="form-header">
-                <span class="step-badge">Langkah 1: Aktivasi</span>
-                <h2>Buat Akun Premium</h2>
-                <p>Akses selamanya dengan satu kali pembayaran aman.</p>
+                <div class="step-badge">Langkah 1 dari 2</div>
+                <h2>Aktivasi Akun</h2>
+                <p>Isi data di bawah untuk memulai proses verifikasi. Akun aktif dalam <strong>1×24 jam</strong>.</p>
             </div>
 
-            <div class="payment-card">
-                <div class="payment-card-label">Biaya Aktivasi</div>
-                <div class="payment-amount">Rp 20.000 <span class="price-original">Rp 50.000</span></div>
-                <div class="payment-methods">
-                    <span class="payment-badge">QRIS</span>
-                    <span class="payment-badge">GOPAY</span>
-                    <span class="payment-badge">OVO</span>
-                    <span class="payment-badge">DANA</span>
-                </div>
-                <p class="payment-note">*Akses seumur hidup (One-time payment)</p>
-            </div>
-
-            <div class="reg-form">
-                <div class="field-group">
-                    <label>Email Utama (@gmail.com)</label>
-                    <div class="email-input-wrap">
-                        <input type="text" id="reg-email" placeholder="nama.kamu">
-                        <span class="email-suffix">@gmail.com</span>
+            <!-- Step 1: Form isi data -->
+            <div id="reg-step-1">
+                <form id="reg-form" class="reg-form">
+                    <div class="field-group">
+                        <label for="f-email">Email Gmail</label>
+                        <div class="email-input-wrap">
+                            <input type="text" id="f-email" placeholder="namakamu" required
+                                   autocomplete="username" autocapitalize="none" spellcheck="false">
+                            <span class="email-suffix">@gmail.com</span>
+                        </div>
+                        <span class="field-hint">Ini yang akan dipakai untuk login</span>
                     </div>
-                    <small class="field-hint">Gunakan email Google Drive yang berisi file musikmu.</small>
-                </div>
-                
-                <div id="reg-error" class="error-msg hidden"></div>
 
-                <button id="btn-pay" class="btn-primary full-width" onclick="handleRegistration()">
-                    Bayar Sekarang <i class="fa-solid fa-qrcode" style="margin-left: 8px;"></i>
-                </button>
-                
-                <div class="reg-footer-note">
-                    <i class="fa-solid fa-shield-halved"></i> Pembayaran Terverifikasi & Aman
+                    <div class="field-group">
+                        <label for="f-share">Link Share di Sosmed</label>
+                        <input type="url" id="f-share" placeholder="https://threads.net/p/..." required>
+                        <span class="field-hint">Share postingan tentang ChloroWave di Threads / IG / Twitter</span>
+                    </div>
+
+                    <div id="reg-error" class="error-msg hidden"></div>
+
+                    <script src="https://temanqris.com/widget.js" data-merchant="MQ4F26C50380" data-button-color="#0f7e07" data-amount="20000"></script>
+
+                    <button type="submit" class="btn-primary full-width" id="reg-submit-btn">
+                        <span id="reg-btn-text">Lanjut ke Pembayaran</span>
+                        <span id="reg-btn-loader" class="btn-loader hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Step 2: QR Payment -->
+            <div id="reg-step-2" class="hidden">
+                <div class="qr-step-header">
+                    <div class="step-badge">Langkah 2 dari 2</div>
+                    <h3>Selesaikan Pembayaran</h3>
+                    <p>Scan QR di bawah dengan aplikasi GoPay atau dompet digital lainnya.</p>
                 </div>
+
+                <div class="qr-amount-badge">
+                    <i class="fa-solid fa-tag"></i> Rp 20.000
+                </div>
+
+                <div id="qr-widget-container" class="qr-widget-container">
+                    <!-- Widget Temanqris di-inject via JS -->
+                </div>
+
+                <div class="qr-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Setelah bayar, klik <strong>"Sudah Bayar"</strong> di widget. 
+                    Akun akan diverifikasi tim kami dalam 1×24 jam.
+                </div>
+
+                <button class="btn-ghost" onclick="backToStep1()" style="width:100%;margin-top:12px">
+                    <i class="fa-solid fa-arrow-left"></i> Kembali
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- SCREEN: PENDING (WAJIB ADA UNTUK FIX MERCHANT ID) -->
+    <!-- ========================
+         SCREEN 3: PENDING
+         Setelah form dikirim, menunggu verifikasi
+    ======================== -->
     <div id="screen-pending" class="screen hidden">
         <div class="page-wrap centered">
-            <div class="pending-icon"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
-            <h2>Menunggu Aktivasi</h2>
-            <p>Silakan selesaikan pembayaran menggunakan QRIS di bawah ini.</p>
-
-            <!-- ⚠️ WADAH UTAMA TEMANQRIS WIDGET ⚠️ -->
-            <div class="qr-widget-container">
-                <div class="temanqris-widget" 
-                     id="qris-widget-element"
-                     data-merchant="MQ4F26C50380" 
-                     data-amount="20000" 
-                     data-description="ChloroWave-Registration">
-                </div>
-            </div>
-
+            <div class="pending-icon">⏳</div>
+            <h2>Pendaftaran Diterima!</h2>
+            <p>Data kamu sedang diverifikasi oleh tim kami.</p>
             <div class="pending-info-card">
                 <div class="pending-info-row">
-                    <span>Email Anda:</span>
-                    <strong id="display-email">-</strong>
+                    <span>Email</span>
+                    <strong id="pending-email-display">—</strong>
                 </div>
                 <div class="pending-info-row">
-                    <span>Status:</span>
-                    <span class="status-badge pending">Menunggu Pembayaran</span>
+                    <span>Status</span>
+                    <strong class="status-badge pending">Menunggu Verifikasi</strong>
+                </div>
+                <div class="pending-info-row">
+                    <span>Estimasi</span>
+                    <strong>1×24 jam</strong>
                 </div>
             </div>
-            
-            <p class="pending-note">
-                Halaman ini akan otomatis beralih ke aplikasi setelah pembayaran berhasil dideteksi sistem.
-            </p>
+            <p class="pending-note">Kami akan mengirim email ke Gmail kamu saat akun sudah aktif. Tidak perlu cek terus-menerus.</p>
+            <button class="btn-ghost" onclick="tryLogin()">Coba Login (jika sudah aktif)</button>
+            <button class="btn-link" onclick="resetPending()">Daftar dengan email lain</button>
         </div>
     </div>
 
-    <!-- SCREEN: MAIN APP (PEMUTAR MUSIK) -->
+    <!-- ========================
+         SCREEN 4: MAIN APP
+         Tampil setelah login berhasil & email diverifikasi
+    ======================== -->
     <div id="screen-app" class="screen hidden">
         <div id="app">
             <header>
                 <div class="header-logo">
-                    <i class="fa-solid fa-bolt-lightning header-fa-icon"></i> CHLOROWAVE
+<img src="logo-black.png" alt="ChloroWave" class="logo-img-sm">
+                    <span>ChloroWave</span>
                 </div>
+
                 <div id="auth-section">
-                    <div class="user-info" onclick="toggleUserMenu()">
-                        <span id="user-display-name">User</span>
-                        <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                    <div id="user-profile">
+                        <div class="user-info" onclick="toggleUserMenu()">
+                            <span id="username-display">Loading...</span>
+<i class="fa-solid fa-chevron-down arrow-icon"></i>
+                        </div>
+                        <div id="user-menu" class="hidden">
+                            <div class="menu-item">
+                                <label>Edit Nama Tampilan:</label>
+                                <input type="text" id="edit-username-input" placeholder="Nama baru...">
+                                <button class="btn-save-username" onclick="saveUsername()">Simpan</button>
+                            </div>
+                            <hr>
+                            <button class="logout-btn" onclick="logout()">Logout</button>
+                        </div>
                     </div>
                 </div>
             </header>
 
             <section id="player-section">
-                <canvas id="visualizer-canvas"></canvas>
+                <!-- Cover Art + Song Info -->
                 <div class="player-top">
-                    <div class="player-cover" id="cover-art">
-                        <i class="fa-solid fa-music cover-initial"></i>
+                    <div id="player-cover" class="player-cover">
+                        <span id="player-cover-initial" class="cover-initial">♪</span>
                     </div>
                     <div class="player-info">
-                        <div class="player-title" id="track-title">Pilih lagu...</div>
-                        <div class="player-artist" id="track-artist">Playlist Anda kosong</div>
+                        <div id="current-song" class="hidden">Pilih lagu...</div>
+                        <div id="player-title" class="player-title">Pilih lagu dari playlist</div>
+                        <div id="player-artist" class="player-artist">ChloroWave</div>
                     </div>
                 </div>
 
-                <div class="custom-player">
-                    <div class="progress-wrap" id="progress-container">
-                        <div class="progress-bar" id="progress-bar"></div>
-                    </div>
-                    <div class="time-row">
-                        <span id="time-current">0:00</span>
-                        <span id="time-duration">0:00</span>
-                    </div>
-                    <div class="controls">
-                        <button class="ctrl-btn ctrl-side" onclick="toggleShuffle()"><i class="fa-solid fa-shuffle"></i></button>
-                        <button class="ctrl-btn ctrl-side" onclick="prevTrack()"><i class="fa-solid fa-backward-step"></i></button>
-                        <button class="ctrl-btn play-btn" onclick="togglePlay()"><i class="fa-solid fa-play" id="play-icon"></i></button>
-                        <button class="ctrl-btn ctrl-side" onclick="nextTrack()"><i class="fa-solid fa-forward-step"></i></button>
-                        <button class="ctrl-btn ctrl-side" onclick="toggleRepeat()"><i class="fa-solid fa-repeat"></i></button>
-                    </div>
+                <!-- Visualizer -->
+                <canvas id="visualizer-canvas" width="460" height="40"></canvas>
+
+                <!-- Progress bar -->
+                <div class="progress-wrap" onclick="seekTo(event)">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <div class="time-row">
+                    <span id="time-current">0:00</span>
+                    <span id="time-total">0:00</span>
+                </div>
+
+                <audio id="audio-player"></audio>
+
+                <!-- Controls: Shuffle | Prev | Play | Next | Repeat -->
+                <div class="controls">
+<button onclick="toggleShuffle()" id="shuffle-btn" title="Shuffle" class="ctrl-btn ctrl-side"><i class="fa-solid fa-shuffle"></i></button>
+<button onclick="prevSong()" title="Sebelumnya" class="ctrl-btn ctrl-side"><i class="fa-solid fa-backward-step"></i></button>
+<button onclick="togglePlay()" id="play-btn" title="Play/Pause" class="ctrl-btn play-btn">
+                        <i id="play-icon" class="fa-solid fa-play"></i>
+                        <i id="pause-icon" class="fa-solid fa-pause" style="display:none"></i>
+                    </button>
+<button onclick="nextSong()" title="Berikutnya" class="ctrl-btn ctrl-side"><i class="fa-solid fa-forward-step"></i></button>
+<button onclick="toggleRepeat()" id="repeat-btn" title="Repeat off" class="ctrl-btn ctrl-side"><i class="fa-solid fa-repeat"></i><span class="repeat-label"></span></button>
                 </div>
             </section>
 
             <section id="playlist-section">
                 <div class="playlist-section-header">
-                    <h3>Daftar Putar</h3>
-                    <button class="btn-refresh" onclick="refreshPlaylist()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    <h3>Playlist <span class="section-note" id="song-count"></span></h3>
+                    <button onclick="refreshPlaylist()" class="btn-refresh" title="Refresh playlist">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        Refresh
+                    </button>
                 </div>
                 <ul id="playlist-ui">
-                    <!-- Lagu akan muncul di sini via app.js -->
+                    <li class="playlist-loading">Memuat lagu dari Drive...</li>
                 </ul>
             </section>
         </div>
     </div>
 
-    <!-- 2. Scripts (URUTAN SANGAT PENTING) -->
-    
-    <!-- Script SDK TemanQRIS -->
-    <script src="https://temanqris.com/widget/js/temanqris-widget.js"></script>
-    
-    <!-- Script Logika Aplikasi Kamu -->
-    <script src="app.js"></script>
+    <!-- ========================
+         MODAL: AKSES DITOLAK
+         Email tidak ada di whitelist
+    ======================== -->
+    <div id="modal-denied" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-icon">🚫</div>
+            <h3>Akses Ditolak</h3>
+            <p>Email <strong id="denied-email"></strong> belum terdaftar atau masih dalam proses verifikasi.</p>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="closeModal('modal-denied'); showScreen('screen-pending')">Lihat Status Pendaftaran</button>
+                <button class="btn-ghost" onclick="closeModal('modal-denied')">Tutup</button>
+            </div>
+        </div>
+    </div>
 
+    <!-- MINI PLAYER STICKY -->
+    <div id="mini-player" class="mini-player hidden">
+        <div class="mini-progress-wrap" onclick="miniSeekTo(event)">
+            <div id="mini-progress-bar" class="mini-progress-bar"></div>
+        </div>
+        <div class="mini-content">
+            <div id="mini-cover" class="mini-cover">♪</div>
+            <div class="mini-info">
+                <div id="mini-title" class="mini-title">—</div>
+                <div id="mini-artist" class="mini-artist">ChloroWave</div>
+            </div>
+            <div class="mini-controls">
+                <button onclick="prevSong()" class="ctrl-btn mini-ctrl">
+<i class="fa-solid fa-backward-step"></i>
+                </button>
+                <button onclick="togglePlay()" class="ctrl-btn mini-play-btn">
+<i id="mini-play-icon" class="fa-solid fa-play"></i>
+                    <i id="mini-pause-icon" class="fa-solid fa-pause" style="display:none"></i>
+                </button>
+                <button onclick="nextSong()" class="ctrl-btn mini-ctrl">
+<i class="fa-solid fa-forward-step"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PANDUAN LOGIN -->
+    <div id="modal-guide" class="modal-overlay hidden">
+        <div class="modal-content modal-guide-content">
+            <div class="guide-header">
+                <div>
+                    <h3>Panduan Login Pertama Kali</h3>
+                    <p style="color:var(--text-muted);font-size:0.8rem;margin:4px 0 0">Ikuti 3 langkah berikut</p>
+                </div>
+                <button class="guide-close" onclick="closeModal('modal-guide')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="guide-warning-box">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div>
+                    <strong>Kenapa ada peringatan dari Google?</strong>
+                    <p>ChloroWave sedang dalam proses verifikasi resmi. Peringatan ini <em>bukan tanda bahaya</em> — app ini hanya membaca file audio di folder <code>chlorowave</code> milikmu.</p>
+                </div>
+            </div>
+
+            <div class="guide-steps">
+                <div class="guide-step">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <strong>Pilih akun Gmail kamu</strong>
+                        <p>Saat popup Google muncul, pilih akun Gmail yang sudah didaftarkan.</p>
+                        <div class="step-img-placeholder">
+                            <i class="fa-brands fa-google" style="font-size:1.5rem;color:#4285F4"></i>
+                            <span>Pilih akun → klik nama/email kamu</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <strong>Klik <em>"Advanced"</em></strong>
+                        <p>Di halaman peringatan Google, klik teks <strong>"Advanced"</strong> di pojok kiri bawah.</p>
+                        <div class="step-img-placeholder">
+                            <i class="fa-solid fa-triangle-exclamation" style="color:#f5a623"></i>
+                            <span>Google hasn't verified this app → klik <strong>Advanced</strong></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <strong>Klik <em>"Go to ChloroWave"</em> lalu <em>"Allow"</em></strong>
+                        <p>Klik teks yang muncul di bawah, lalu klik <strong>Allow</strong> untuk izinkan akses Drive.</p>
+                        <div class="step-img-placeholder">
+                            <i class="fa-solid fa-check-circle" style="color:var(--green)"></i>
+                            <span>Go to ChloroWave (unsafe) → Allow → <strong>Selesai!</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-footer-note">
+                <i class="fa-solid fa-rotate-left"></i>
+                Login berikutnya langsung masuk — peringatan ini hanya muncul <strong>sekali</strong>.
+            </div>
+
+            <button class="btn-primary" onclick="closeModal('modal-guide')" style="width:100%;margin-top:16px">
+                <i class="fa-solid fa-arrow-right"></i> Mengerti, Lanjutkan Login
+            </button>
+        </div>
+    </div>
+
+    <script src="https://temanqris.com/widget.js" defer></script>
+    <script src="https://temanqris.com/widget.js" defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="app.js"></script>
 </body>
 </html>
