@@ -76,8 +76,27 @@ document.addEventListener('click', touchSession);
 //  INIT
 // ============================================================
 window.addEventListener('load', async () => {
-    const session = loadSession();
+    // Cek callback dari Temanqris setelah bayar
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+        const email    = params.get('email');
+        const shareUrl = params.get('share') || localStorage.getItem('cw_reg_shareUrl') || '';
+        if (email) {
+            // Simpan ke GAS
+            try {
+                await fetch(`${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=QRIS-TEMANQRIS`);
+            } catch(err) { console.error('GAS register error:', err); }
+            localStorage.setItem('cw_status', 'pending');
+            localStorage.setItem('cw_email',  email);
+            window.history.replaceState({}, '', window.location.pathname);
+            document.getElementById('pending-email-display').textContent = email;
+            showScreen('screen-pending');
+            return;
+        }
+    }
 
+    // Cek session aktif
+    const session = loadSession();
     if (session && session.token && session.email) {
         accessToken = session.token;
         userEmail   = session.email;
@@ -141,32 +160,28 @@ function initTemanqrisWidget(email, shareUrl) {
     const container = document.getElementById('qr-widget-container');
     container.innerHTML = '';
 
+    const callbackUrl = window.location.origin + window.location.pathname +
+        '?payment=success&email=' + encodeURIComponent(email) +
+        '&share=' + encodeURIComponent(shareUrl);
+
+    // Buat div dengan atribut Temanqris (widget.js baca dari div, bukan script tag)
+    const div = document.createElement('div');
+    div.setAttribute('data-temanqris',       '');
+    div.setAttribute('data-merchant',        CONFIG.TEMANQRIS_MERCHANT);
+    div.setAttribute('data-amount',          CONFIG.TEMANQRIS_AMOUNT);
+    div.setAttribute('data-button-text',     'Bayar Rp 20.000 dengan QRIS');
+    div.setAttribute('data-button-color',    '#1DB954');
+    div.setAttribute('data-description',     'ChloroWave-' + email);
+    div.setAttribute('data-callback',        callbackUrl);
+    div.setAttribute('data-webhook',         CONFIG.GAS_ENDPOINT + '?action=paymentWebhook');
+    container.appendChild(div);
+
+    // Inject script baru dengan timestamp agar tidak di-cache
     const script = document.createElement('script');
-    script.src = 'https://temanqris.com/widget.js';
-    script.setAttribute('data-merchant',     CONFIG.TEMANQRIS_MERCHANT);
-    script.setAttribute('data-amount',       CONFIG.TEMANQRIS_AMOUNT);
-    script.setAttribute('data-button-text',  'Bayar Rp 20.000 dengan QRIS');
-    script.setAttribute('data-button-color', '#1DB954');
-    script.setAttribute('data-description',  'ChloroWave-' + email);
-    script.setAttribute('data-callback',     window.location.origin + window.location.pathname + '?payment=success&email=' + encodeURIComponent(email) + '&share=' + encodeURIComponent(shareUrl));
-    script.setAttribute('data-webhook',      CONFIG.GAS_ENDPOINT + '?action=paymentWebhook');
-    container.appendChild(script);
+    script.src = 'https://temanqris.com/widget.js?t=' + Date.now();
+    document.body.appendChild(script);
 }
 
-
-// Cek apakah callback dari payment berhasil
-window.addEventListener('load', () => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('payment') === 'success') {
-        const email = params.get('email');
-        if (email) {
-            localStorage.setItem('cw_status', 'pending');
-            localStorage.setItem('cw_email',  email);
-            // Bersihkan URL
-            window.history.replaceState({}, '', window.location.pathname);
-        }
-    }
-});
 
 function showError(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
 
