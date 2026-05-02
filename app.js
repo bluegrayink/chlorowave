@@ -260,7 +260,7 @@ function onLoginSuccess(user) {
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
-    document.getElementById('username-display').textContent = '👤 ' + name;
+    document.getElementById('username-display').textContent = name;
 }
 
 function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
@@ -649,7 +649,7 @@ async function playSong(idx) {
     }
 
     const displayName = parsed.title || file.name.replace(/\.[^.]+$/, '');
-    songEl.textContent = '⏳ Memuat...';
+    songEl.textContent = 'Memuat...';
 
     // Update player info
     document.getElementById('player-title').textContent  = displayName;
@@ -683,7 +683,7 @@ async function playSong(idx) {
         if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
 
     } catch (err) {
-        songEl.textContent = '⚠ Gagal memutar: ' + file.name;
+        songEl.textContent = 'Gagal memutar: ' + file.name;
     }
 }
 
