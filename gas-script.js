@@ -368,7 +368,7 @@ Terima kasih sudah mendukung ChloroWave! 🎵
             <li>Buka ChloroWave di browser</li>
             <li>Klik <strong style="color: #fff;">"Sudah punya akun? Login"</strong></li>
             <li>Login dengan Gmail ini</li>
-            <li>Selesai — putar musikmu! 🎵</li>
+            <li>Selesai — putar musikmu!</li>
         </ol>
     </div>
     <p style="color: #555; font-size: 0.78rem; text-align: center; margin-top: 16px;">
