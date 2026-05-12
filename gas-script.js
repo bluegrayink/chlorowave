@@ -15,8 +15,10 @@
 const CONFIG = {
     SPREADSHEET_ID:    '1xuyKqv3LMemxOVcci8T9AIY34AgcLEfI4ITmS4ILqzg',
     SHEET_NAME:        'Sheet1',
-    COL_EMAIL:         1,  // Kolom B = index 1
-    COL_STATUS:        4,  // Kolom E = index 4
+    COL_EMAIL:         1,  // Kolom B
+    COL_STATUS:        4,  // Kolom E
+    COL_REF_CODE:      6,  // Kolom G - kode referral milik user ini
+    COL_REFERRED_BY:   7,  // Kolom H - direferensikan oleh siapa
     ADMIN_EMAIL:       'cs.chlorowave@gmail.com',
     EMAIL_SENDER_NAME: 'ChloroWave',
 };
@@ -35,14 +37,15 @@ function doGet(e) {
         if (action === 'checkWhitelist') {
             result = checkWhitelist(e.parameter.email);
         } else if (action === 'register') {
-            result = registerUser(e.parameter.email, e.parameter.shareUrl, e.parameter.refNum);
+            result = registerUser(e.parameter.email, e.parameter.shareUrl, e.parameter.refNum, e.parameter.refBy);
         } else if (action === 'paymentWebhook') {
             result = handlePaymentWebhook(e);
+        } else if (action === 'getRefCode') {
+            result = getRefCode(e.parameter.email);
         } else if (action === 'songRequest') {
             result = logSongRequest(e.parameter.song, e.parameter.email);
-        } else if (action === 'paymentWebhook') {
-            // Webhook dari Temanqris via GET (fallback)
-            result = { ok: true, msg: 'Use POST for webhook' };
+        } else if (action === 'getReferralCode') {
+            result = getReferralCode(e.parameter.email);
         } else {
             result = { ok: true, msg: 'ChloroWave API running' };
         }
@@ -204,24 +207,55 @@ function activateUser(email) {
     for (let i = 1; i < data.length; i++) {
         const rowEmail = (data[i][CONFIG.COL_EMAIL] || '').toString().toLowerCase().trim();
         if (rowEmail === email) {
-            // Update status jadi active
+            // Generate kode referral unik
+            const refCode = generateRefCode(email);
+
+            // Update status, catatan, dan ref code
             sheet.getRange(i + 1, CONFIG.COL_STATUS + 1).setValue('active');
-            sheet.getRange(i + 1, CONFIG.COL_STATUS + 2).setValue(
+            sheet.getRange(i + 1, CONFIG.COL_ADMIN + 1).setValue(
                 'Auto-aktivasi via QRIS: ' + new Date().toLocaleString('id-ID')
             );
-            // Kirim email aktivasi
-            sendActivationEmail(email);
-            return { ok: true, email, activated: true };
+            sheet.getRange(i + 1, CONFIG.COL_REF_CODE + 1).setValue(refCode);
+
+            // Kirim email aktivasi dengan kode referral
+            sendActivationEmail(email, refCode);
+            return { ok: true, email, activated: true, refCode };
         }
     }
 
     return { ok: false, reason: 'email_not_found' };
 }
 
+function generateRefCode(email) {
+    // Format: CW-[nama][4digit] contoh CW-ALBERT2847
+    const name   = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8);
+    const digits = Math.floor(1000 + Math.random() * 9000);
+    return 'CW-' + name + digits;
+}
+
+function getReferralCode(email) {
+    if (!email) return { ok: false };
+
+    const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID)
+        .getSheetByName(CONFIG.SHEET_NAME);
+
+    if (!sheet) return { ok: false, reason: 'sheet_not_found' };
+
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+        const rowEmail = (data[i][CONFIG.COL_EMAIL] || '').toString().toLowerCase().trim();
+        if (rowEmail === email.toLowerCase().trim()) {
+            const refCode = (data[i][CONFIG.COL_REF_CODE] || '').toString().trim();
+            return { ok: true, refCode: refCode || null };
+        }
+    }
+    return { ok: false, reason: 'not_found' };
+}
+
 // ============================================================
 //  FUNGSI 1: Registrasi user baru
 // ============================================================
-function registerUser(email, shareUrl, refNum) {
+function registerUser(email, shareUrl, refNum, refBy) {
     if (!email) return { ok: false, reason: 'no_email' };
 
     const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID)
@@ -233,9 +267,10 @@ function registerUser(email, shareUrl, refNum) {
         new Date().toLocaleString('id-ID'),  // A: Timestamp
         email,                                // B: Email Gmail
         shareUrl || '',                       // C: Link Share
-        refNum   || '',                       // D: Nomor Referensi
+        refNum   || '',                       // D: Nomor Referensi / QRIS
         'pending',                            // E: Status
-        ''                                    // F: Catatan Admin
+        '',                                   // F: Catatan Admin
+        refBy    || ''                        // G: Referred By
     ]);
 
     return { ok: true };
@@ -271,7 +306,40 @@ function checkWhitelist(email) {
 }
 
 // ============================================================
-//  FUNGSI 3: Log song request
+//  FUNGSI 3: Ambil kode referral user (dipanggil setelah login)
+// ============================================================
+function getRefCode(email) {
+    if (!email) return { ok: false };
+
+    const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) return { ok: false };
+
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+        const rowEmail = (data[i][CONFIG.COL_EMAIL] || '').toString().toLowerCase().trim();
+        if (rowEmail === email.toLowerCase().trim()) {
+            const refCode    = data[i][CONFIG.COL_REF_CODE]    || '';
+            const referredBy = data[i][CONFIG.COL_REFERRED_BY] || '';
+
+            // Hitung berapa yang direferensikan user ini
+            const totalRefs = data.filter((r, idx) =>
+                idx > 0 && (r[CONFIG.COL_REFERRED_BY] || '').toString() === refCode
+            ).length;
+
+            const activeRefs = data.filter((r, idx) =>
+                idx > 0 &&
+                (r[CONFIG.COL_REFERRED_BY] || '').toString() === refCode &&
+                (r[CONFIG.COL_STATUS] || '').toString().toLowerCase() === 'active'
+            ).length;
+
+            return { ok: true, refCode, referredBy, totalRefs, activeRefs };
+        }
+    }
+    return { ok: false, reason: 'not_found' };
+}
+
+// ============================================================
+//  FUNGSI 4: Log song request
 // ============================================================
 function logSongRequest(song, email) {
     if (!song) return { ok: false };
@@ -319,10 +387,12 @@ function onStatusChange(e) {
 
     if (!userEmail || !userEmail.includes('@')) return;
 
-    sendActivationEmail(userEmail);
+    const refCode = generateRefCode(userEmail);
+    sheet.getRange(row, CONFIG.COL_REF_CODE + 1).setValue(refCode);
+    sendActivationEmail(userEmail, refCode);
 
-    // Catat di kolom Catatan Admin (COL_STATUS + 2)
-    sheet.getRange(row, CONFIG.COL_STATUS + 2).setValue(
+    // Catat di kolom Catatan Admin
+    sheet.getRange(row, CONFIG.COL_ADMIN + 1).setValue(
         'Email aktivasi dikirim: ' + new Date().toLocaleString('id-ID')
     );
 }
@@ -330,7 +400,7 @@ function onStatusChange(e) {
 // ============================================================
 //  EMAIL AKTIVASI
 // ============================================================
-function sendActivationEmail(userEmail) {
+function sendActivationEmail(userEmail, refCode) {
     const subject = '✅ Akun ChloroWave Kamu Sudah Aktif!';
 
     const body = `
@@ -368,8 +438,14 @@ Terima kasih sudah mendukung ChloroWave! 🎵
             <li>Buka ChloroWave di browser</li>
             <li>Klik <strong style="color: #fff;">"Sudah punya akun? Login"</strong></li>
             <li>Login dengan Gmail ini</li>
-            <li>Selesai — putar musikmu!</li>
+            <li>Selesai — putar musikmu! 🎵</li>
         </ol>
+        ${refCode ? `
+        <div style="background: #1e1e1e; border-radius: 10px; padding: 16px; margin: 20px 0; border-left: 3px solid #1DB954;">
+            <p style="color: #666; font-size: 0.8rem; margin: 0 0 6px;">🎁 Kode Referral kamu:</p>
+            <p style="color: #1DB954; font-family: monospace; font-size: 1.1rem; font-weight: bold; margin: 0 0 6px;">${refCode}</p>
+            <p style="color: #666; font-size: 0.78rem; margin: 0;">Share link ini ke teman: bluegrayink.github.io/chlorowave?ref=${refCode}</p>
+        </div>` : ''}
     </div>
     <p style="color: #555; font-size: 0.78rem; text-align: center; margin-top: 16px;">
         Email ini dikirim otomatis oleh sistem ChloroWave.
