@@ -8,7 +8,7 @@ const CONFIG = {
     GAS_ENDPOINT:        'https://script.google.com/macros/s/AKfycbwccnydHu5Q6H1zvKN_awF_4Np4JtDSmc1GXSYSvBEYIqoXiBK9ZpkIhcJAF0Qv-bGCNg/exec',
     FOLDER_NAME:         'chlorowave',
     TEMANQRIS_MERCHANT:  'MQ4F26C50380',
-    TEMANQRIS_AMOUNT:    20000,
+    TEMANQRIS_AMOUNT:    100000,
 };
 
 // ============================================================
