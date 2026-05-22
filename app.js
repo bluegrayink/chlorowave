@@ -1,5 +1,5 @@
 // ============================================================
-//  CHLOROWAVE — app.js
+//  CHLOROWAVE — app.js (UPDATED FULL CODE)
 //  Features: Cover Art (MusicBrainz), Shuffle, Repeat, Mini Player
 // ============================================================
 
@@ -29,6 +29,7 @@ let animFrameId  = null;
 let coverCache   = {}; // cache cover art per song name
 let shuffleQueue    = []; // lagu yang belum diputar di shuffle saat ini
 let shufflePlayed   = []; // lagu yang sudah diputar di shuffle ini
+let regData = { email: '', shareUrl: '' };
 
 // ============================================================
 //  SCREEN NAVIGATION
@@ -75,7 +76,7 @@ function touchSession() {
 document.addEventListener('click', touchSession);
 
 // ============================================================
-//  INIT
+//  INIT LIFECYCLE
 // ============================================================
 window.addEventListener('load', async () => {
     const params = new URLSearchParams(window.location.search);
@@ -86,13 +87,14 @@ window.addEventListener('load', async () => {
         localStorage.setItem('cw_ref', refCode.toUpperCase());
     }
 
-    // Cek callback dari Temanqris setelah bayar
+    // Cek callback dari Temanqris setelah bayar sukses
     if (params.get('payment') === 'success') {
         const email    = params.get('email');
         const shareUrl = params.get('share') || localStorage.getItem('cw_reg_shareUrl') || '';
         if (email) {
             try {
                 const refBy = localStorage.getItem('cw_ref') || '';
+                // Daftarkan ulang ke GAS dengan status sukses terbayar otomatis
                 await fetch(`${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=QRIS-TEMANQRIS&refBy=${encodeURIComponent(refBy)}`);
             } catch(err) { console.error('GAS register error:', err); }
             localStorage.setItem('cw_status', 'pending');
@@ -104,7 +106,7 @@ window.addEventListener('load', async () => {
         }
     }
 
-    // Bersihkan parameter URL agar rapi
+    // Bersihkan parameter URL agar tidak mengganggu loading ulang halaman
     if (params.has('ref') || params.has('payment')) {
         window.history.replaceState({}, '', window.location.pathname);
     }
@@ -131,43 +133,63 @@ window.addEventListener('load', async () => {
 });
 
 // ============================================================
-//  REGISTRASI
+//  REGISTRASI & INTEGRASI TEMANQRIS
 // ============================================================
-let regData = { email: '', shareUrl: '' };
+window.addEventListener('DOMContentLoaded', () => {
+    const regForm = document.getElementById('reg-form');
+    if (!regForm) return;
 
-document.getElementById('reg-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const errEl     = document.getElementById('reg-error');
-    const submitBtn = document.getElementById('reg-submit-btn');
+    regForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errEl     = document.getElementById('reg-error');
+        const submitBtn = document.getElementById('reg-submit-btn');
 
-    const prefix   = document.getElementById('f-email').value.trim().toLowerCase().replace(/@.*/, '');
-    const email    = prefix + '@gmail.com';
-    const shareUrl = document.getElementById('f-share').value.trim();
+        const prefix   = document.getElementById('f-email').value.trim().toLowerCase().replace(/@.*/, '');
+        const email    = prefix + '@gmail.com';
+        const shareUrl = document.getElementById('f-share').value.trim();
 
-    if (!prefix) { showError(errEl, 'Masukkan nama akun Gmail kamu'); return; }
-    if (!shareUrl) { showError(errEl, 'Masukkan link share sosmed kamu'); return; }
+        if (!prefix) { showError(errEl, 'Masukkan nama akun Gmail kamu'); return; }
+        if (!shareUrl) { showError(errEl, 'Masukkan link share sosmed kamu'); return; }
 
-    errEl.classList.add('hidden');
+        errEl.classList.add('hidden');
+        const refBy = localStorage.getItem('cw_ref') || '';
 
-    regData = { email, shareUrl };
-    localStorage.setItem('cw_reg_email',    email);
-    localStorage.setItem('cw_reg_shareUrl', shareUrl);
+        regData = { email, shareUrl };
+        localStorage.setItem('cw_reg_email',    email);
+        localStorage.setItem('cw_reg_shareUrl', shareUrl);
 
-    initTemanqrisWidget(email, shareUrl);
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan Server...';
+            
+            // Kirim entri data pendaftaran awal ke Google Sheet dengan status pending pembayaran
+            await fetch(`${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=PENDING-QRIS&refBy=${encodeURIComponent(refBy)}`);
+            
+            // Inisialisasi Tombol QRIS Widget
+            initTemanqrisWidget(email, shareUrl);
 
-    submitBtn.style.display = 'none';
-    document.getElementById('f-email').disabled = true;
-    document.getElementById('f-share').disabled = true;
+            submitBtn.style.display = 'none';
+            document.getElementById('f-email').disabled = true;
+            document.getElementById('f-share').disabled = true;
 
-    const info = document.createElement('p');
-    info.className = 'reg-footer-note';
-    info.style.color = 'var(--green)';
-    info.innerHTML = '<i class="fa-solid fa-check-circle"></i> Data tersimpan. Klik tombol di bawah untuk bayar.';
-    submitBtn.parentNode.insertBefore(info, submitBtn);
+            const info = document.createElement('p');
+            info.className = 'reg-footer-note';
+            info.style.color = 'var(--green)';
+            info.style.marginTop = '15px';
+            info.innerHTML = '<i class="fa-solid fa-check-circle"></i> Data tersimpan! Silakan klik tombol QRIS di bawah untuk menyelesaikan pembayaran.';
+            submitBtn.parentNode.insertBefore(info, submitBtn);
+
+        } catch(err) {
+            showError(errEl, 'Gagal menghubungi server database. Coba sesaat lagi.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Lanjutkan Pembayaran';
+        }
+    });
 });
 
 function initTemanqrisWidget(email, shareUrl) {
     const container = document.getElementById('qr-widget-container');
+    if (!container) return;
     container.innerHTML = '';
 
     const callbackUrl = window.location.origin + window.location.pathname +
@@ -193,11 +215,11 @@ function initTemanqrisWidget(email, shareUrl) {
 function showError(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
 
 // ============================================================
-//  LOGIN
+//  OAUTH2 LOGIN GOOGLE & WHITELIST VERIFICATION
 // ============================================================
 function tryLogin() {
     if (typeof google === 'undefined') {
-        alert('Koneksi internet diperlukan. Coba muat ulang halaman.');
+        alert('Layanan Google GSI gagal dimuat. Periksa koneksi internet dan muat ulang halaman.');
         return;
     }
     const client = google.accounts.oauth2.initTokenClient({
@@ -223,6 +245,7 @@ async function handlePostLogin() {
         });
         const user = await res.json();
         userEmail  = user.email;
+        
         const isWhitelisted = await checkWhitelist(userEmail);
         if (isWhitelisted) {
             onLoginSuccess(user);
@@ -232,7 +255,7 @@ async function handlePostLogin() {
             accessToken = null; userEmail = null;
         }
     } catch (err) {
-        alert('Terjadi kesalahan saat login. Coba lagi.');
+        alert('Terjadi error otentikasi profile. Silakan coba login kembali.');
     }
 }
 
@@ -265,7 +288,7 @@ async function fetchAndShowRefCode(email) {
             localStorage.setItem('cw_my_ref', data.refCode);
             updateRefUI(data.refCode);
         }
-    } catch (err) { console.error('Ref code error:', err); }
+    } catch (err) { console.error('Gagal mengambil kode referral:', err); }
 }
 
 function updateRefUI(refCode) {
@@ -275,7 +298,7 @@ function updateRefUI(refCode) {
 }
 
 // ============================================================
-//  USER PROFILE & REFERRAL SYSTEM
+//  USER PROFILE & REFERRAL LINK COUPLING
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
@@ -342,7 +365,7 @@ function saveUsername() {
 }
 
 function logout() {
-    if (confirm('Yakin mau logout?')) {
+    if (confirm('Yakin mau logout dari ChloroWave?')) {
         accessToken = null; userEmail = null; playlist = []; playlists = {}; currentIdx = -1;
         clearSession();
         stopVisualizer();
@@ -352,7 +375,7 @@ function logout() {
 }
 
 function resetPending() {
-    if (confirm('Data pendaftaran sebelumnya akan dihapus. Lanjut?')) {
+    if (confirm('Data pendaftaran sebelumnya akan dihapus dari browser. Lanjut?')) {
         localStorage.removeItem('cw_status');
         localStorage.removeItem('cw_email');
         showScreen('screen-register');
@@ -363,11 +386,11 @@ function openModal(id)  { document.getElementById(id).classList.remove('hidden')
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
 // ============================================================
-//  GOOGLE DRIVE
+//  GOOGLE DRIVE MEDIA LOADER
 // ============================================================
 async function fetchSongsFromDrive() {
     const listEl = document.getElementById('playlist-ui');
-    listEl.innerHTML = '<li class="playlist-loading">Mencari folder chlorowave...</li>';
+    listEl.innerHTML = '<li class="playlist-loading"><i class="fa-solid fa-spinner fa-spin"></i> Mencari folder chlorowave...</li>';
     document.getElementById('song-count').textContent = '';
 
     try {
@@ -381,14 +404,14 @@ async function fetchSongsFromDrive() {
             listEl.innerHTML = `
                 <li class="folder-not-found">
                     <div class="fnf-icon"><i class="fa-solid fa-folder-open"></i></div>
-                    <div class="fnf-title">Folder tidak ditemukan</div>
-                    <div class="fnf-desc">Buat folder <code>chlorowave</code> di Google Drive kamu, lalu upload lagu ke dalamnya.</div>
+                    <div class="fnf-title">Folder 'chlorowave' Tidak Ditemukan</div>
+                    <div class="fnf-desc">Silakan buat folder baru bernama <code>chlorowave</code> di Google Drive Anda, lalu isi dengan lagu-lagu kesukaan Anda.</div>
                     <div class="fnf-steps">
                         <div class="fnf-step"><span class="fnf-num">1</span><span>Buka <a href="https://drive.google.com" target="_blank">Google Drive</a></span></div>
-                        <div class="fnf-step"><span class="fnf-num">2</span><span>Klik <strong>+ New</strong> ? <strong>Folder</strong></span></div>
-                        <div class="fnf-step"><span class="fnf-num">3</span><span>Beri nama persis: <code>chlorowave</code></span></div>
-                        <div class="fnf-step"><span class="fnf-num">4</span><span>Upload lagu ke folder tersebut</span></div>
-                        <div class="fnf-step"><span class="fnf-num">5</span><span>Klik tombol <strong>Refresh</strong> di atas</span></div>
+                        <div class="fnf-step"><span class="fnf-num">2</span><span>Klik tombol <strong>+ Baru</strong> → Pilih <strong>Folder Baru</strong></span></div>
+                        <div class="fnf-step"><span class="fnf-num">3</span><span>Beri nama huruf kecil semua: <code>chlorowave</code></span></div>
+                        <div class="fnf-step"><span class="fnf-num">4</span><span>Upload berkas musik (.mp3 / .m4a) ke dalam folder tersebut</span></div>
+                        <div class="fnf-step"><span class="fnf-num">5</span><span>Klik tombol <strong>Sinkron</strong> di pojok kanan atas halaman ini</span></div>
                     </div>
                 </li>`;
             return;
@@ -401,7 +424,7 @@ async function fetchSongsFromDrive() {
         document.getElementById('song-count').textContent = `${totalSongs} lagu`;
 
         if (totalSongs === 0) {
-            listEl.innerHTML = '<li class="playlist-empty">Folder chlorowave kosong. Upload lagu dulu!</li>';
+            listEl.innerHTML = '<li class="playlist-empty">Folder ditemukan, namun belum ada musik di dalamnya. Ayo upload lagumu!</li>';
             return;
         }
 
@@ -409,7 +432,7 @@ async function fetchSongsFromDrive() {
         setupMediaSession();
 
     } catch (err) {
-        document.getElementById('playlist-ui').innerHTML = `<li class="playlist-error">Gagal memuat: ${err.message}</li>`;
+        document.getElementById('playlist-ui').innerHTML = `<li class="playlist-error">Gagal sinkronisasi: ${err.message}</li>`;
     }
 }
 
@@ -464,7 +487,7 @@ function isAudioFile(file) {
 }
 
 // ============================================================
-//  RENDER PLAYLIST
+//  RENDER PLAYLIST GENERATOR
 // ============================================================
 function renderPlaylist() {
     const listEl = document.getElementById('playlist-ui');
@@ -484,7 +507,7 @@ function renderPlaylist() {
         }
     }
 
-    listEl.innerHTML = html || '<li class="playlist-empty">Tidak ada lagu.</li>';
+    listEl.innerHTML = html || '<li class="playlist-empty">Tidak ada trek musik tersedia.</li>';
 }
 
 function trackHTML(idx, song) {
@@ -505,7 +528,7 @@ function trackHTML(idx, song) {
 }
 
 // ============================================================
-//  COVER ART — MusicBrainz + Cover Art Archive
+//  METADATA & ARTWORK DECORATOR (MusicBrainz Archive)
 // ============================================================
 function parseSongName(filename) {
     const match = filename.match(/^(.+?)\s*[-–]\s*(.+)$/);
@@ -523,35 +546,19 @@ function gradientColors(str) {
 
 async function fetchCoverArt(songName) {
     if (coverCache[songName]) return coverCache[songName];
-
     const parsed = parseSongName(songName);
-    const query  = parsed.artist
-        ? `recording:"${parsed.title}" AND artist:"${parsed.artist}"`
-        : `recording:"${parsed.title}"`;
-
+    const query  = parsed.artist ? `recording:"${parsed.title}" AND artist:"${parsed.artist}"` : `recording:"${parsed.title}"`;
     try {
-        const mbRes  = await fetch(
-            `https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(query)}&limit=1&fmt=json`,
-            { headers: { 'User-Agent': 'ChloroWave/1.0 (cs.chlorowave@gmail.com)' } }
-        );
+        const mbRes  = await fetch(`https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(query)}&limit=1&fmt=json`, { headers: { 'User-Agent': 'ChloroWave/1.0 (cs.chlorowave@gmail.com)' } });
         const mbData = await mbRes.json();
-
         if (!mbData.recordings || mbData.recordings.length === 0) return null;
-
-        const recording = mbData.recordings[0];
-        const releaseId = recording.releases?.[0]?.id;
+        const releaseId = mbData.recordings[0].releases?.[0]?.id;
         if (!releaseId) return null;
-
         const caRes = await fetch(`https://coverartarchive.org/release/${releaseId}/front-250`);
         if (!caRes.ok) return null;
-
-        const url = caRes.url;
-        coverCache[songName] = url;
-        return url;
-
-    } catch {
-        return null;
-    }
+        coverCache[songName] = caRes.url;
+        return caRes.url;
+    } catch { return null; }
 }
 
 async function updateCoverArt(songName, idx) {
@@ -585,13 +592,12 @@ async function updateCoverArt(songName, idx) {
             miniCover.style.backgroundPosition = 'center';
             miniCover.textContent = '';
         }
-
         updateMediaSessionCover(coverUrl);
     }
 }
 
 // ============================================================
-//  SHUFFLE & REPEAT
+//  SHUFFLE, REPEAT & NAVIGATION LOGIC
 // ============================================================
 function rebuildShuffleIdxs() {
     shuffleQueue  = [...Array(playlist.length).keys()];
@@ -614,9 +620,7 @@ function toggleShuffle() {
     if (btn) btn.classList.toggle('ctrl-active', shuffleMode);
 }
 
-function refreshPlaylist() {
-    location.reload();
-}
+function refreshPlaylist() { fetchSongsFromDrive(); }
 
 function toggleRepeat() {
     const modes = ['none', 'all', 'one'];
@@ -639,10 +643,7 @@ function getNextIdx() {
     if (shuffleMode) {
         if (!shufflePlayed.includes(currentIdx)) shufflePlayed.push(currentIdx);
         shuffleQueue = shuffleQueue.filter(i => i !== currentIdx);
-
-        if (shuffleQueue.length === 0) {
-            rebuildShuffleIdxs();
-        }
+        if (shuffleQueue.length === 0) rebuildShuffleIdxs();
         return shuffleQueue[0];
     }
     return currentIdx >= playlist.length - 1 ? 0 : currentIdx + 1;
@@ -662,14 +663,13 @@ function getPrevIdx() {
 }
 
 // ============================================================
-//  PLAYER
+//  AUDIO PLAYER CONTEXT HANDLER
 // ============================================================
 async function playSong(idx) {
     if (idx < 0 || idx >= playlist.length) return;
 
     currentIdx = idx;
     const file   = playlist[idx];
-    const songEl = document.getElementById('current-song');
     const player = document.getElementById('audio-player');
     const parsed = parseSongName(file.name.replace(/\.[^.]+$/, ''));
 
@@ -686,8 +686,6 @@ async function playSong(idx) {
     }
 
     const displayName = parsed.title || file.name.replace(/\.[^.]+$/, '');
-    songEl.textContent = '⏳ Memuat...';
-
     document.getElementById('player-title').textContent  = displayName;
     document.getElementById('player-artist').textContent = parsed.artist || 'ChloroWave';
 
@@ -707,26 +705,20 @@ async function playSong(idx) {
         player.src = URL.createObjectURL(blob);
         await player.play();
 
-        songEl.textContent = displayName;
         showMiniPlayer();
         startVisualizer(idx);
         updateMediaSession(displayName, parsed.artist || 'ChloroWave', file.playlistName);
-
         updateCoverArt(file.name.replace(/\.[^.]+$/, ''), idx);
 
         if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
-
     } catch (err) {
-        songEl.textContent = '❌ Gagal memutar: ' + file.name;
+        document.getElementById('player-title').textContent = '❌ Gagal Memuat Musik';
     }
 }
 
 function prevSong() { if (playlist.length) playSong(getPrevIdx()); }
 function nextSong() { if (playlist.length) playSong(getNextIdx()); }
 
-// ============================================================
-//  CUSTOM PLAYER CONTROLS
-// ============================================================
 function togglePlay() {
     const player = document.getElementById('audio-player');
     if (player.paused) { player.play(); } else { player.pause(); }
@@ -751,6 +743,14 @@ function seekTo(e) {
     player.currentTime = pct * player.duration;
 }
 
+function miniSeekTo(e) {
+    const player = document.getElementById('audio-player');
+    if (!player.duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    player.currentTime = pct * player.duration;
+}
+
 function formatTime(sec) {
     if (isNaN(sec) || !isFinite(sec)) return '0:00';
     const m = Math.floor(sec / 60);
@@ -758,7 +758,7 @@ function formatTime(sec) {
     return `${m}:${s}`;
 }
 
-// Inisialisasi Event Listener Player setelah DOM siap
+// Inisialisasi Player Event Listeners
 window.addEventListener('DOMContentLoaded', () => {
     const _player = document.getElementById('audio-player');
     if (!_player) return;
@@ -775,15 +775,8 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    _player.addEventListener('pause', () => {
-        updatePlayBtn(false);
-        stopBarAnimation();
-    });
-
-    _player.addEventListener('play', () => {
-        updatePlayBtn(true);
-        if (currentIdx >= 0) startBarAnimationCSS(currentIdx);
-    });
+    _player.addEventListener('pause', () => { updatePlayBtn(false); stopBarAnimation(); });
+    _player.addEventListener('play', () => { updatePlayBtn(true); if (currentIdx >= 0) startBarAnimationCSS(currentIdx); });
 
     _player.addEventListener('timeupdate', () => {
         const pct = _player.duration ? (_player.currentTime / _player.duration) * 100 : 0;
@@ -801,29 +794,11 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ============================================================
-//  MINI PLAYER STICKY
-// ============================================================
-function showMiniPlayer() {
-    const mini = document.getElementById('mini-player');
-    if (mini) mini.classList.remove('hidden');
-}
-
-function hideMiniPlayer() {
-    const mini = document.getElementById('mini-player');
-    if (mini) mini.classList.add('hidden');
-}
-
-function miniSeekTo(e) {
-    const player = document.getElementById('audio-player');
-    if (!player.duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    player.currentTime = pct * player.duration;
-}
+function showMiniPlayer() { const mini = document.getElementById('mini-player'); if (mini) mini.classList.remove('hidden'); }
+function hideMiniPlayer() { const mini = document.getElementById('mini-player'); if (mini) mini.classList.add('hidden'); }
 
 // ============================================================
-//  WEB AUDIO VISUALIZER
+//  WEB AUDIO CANVAS VISUALIZER
 // ============================================================
 function initAudioContext() {
     if (audioCtx) return;
@@ -899,7 +874,7 @@ function stopVisualizer() {
 }
 
 // ============================================================
-//  MEDIA SESSION API
+//  OS BROWSER SYSTEMS BACKGROUND (MEDIA SESSION API)
 // ============================================================
 function setupMediaSession() {
     if (!('mediaSession' in navigator)) return;
@@ -907,40 +882,21 @@ function setupMediaSession() {
     navigator.mediaSession.setActionHandler('pause',         () => document.getElementById('audio-player').pause());
     navigator.mediaSession.setActionHandler('previoustrack', () => prevSong());
     navigator.mediaSession.setActionHandler('nexttrack',     () => nextSong());
-    navigator.mediaSession.setActionHandler('seekbackward',  () => {
-        const p = document.getElementById('audio-player');
-        p.currentTime = Math.max(0, p.currentTime - 10);
-    });
-    navigator.mediaSession.setActionHandler('seekforward', () => {
-        const p = document.getElementById('audio-player');
-        p.currentTime = Math.min(p.duration || 0, p.currentTime + 10);
-    });
 }
 
 function updateMediaSession(title, artist, album, coverUrl) {
     if (!('mediaSession' in navigator)) return;
-    const artwork = coverUrl
-        ? [{ src: coverUrl, sizes: '250x250', type: 'image/jpeg' }]
-        : [{ src: 'https://bluegrayink.github.io/chlorowave/icon.png', sizes: '192x192', type: 'image/png' }];
-    navigator.mediaSession.metadata = new MediaMetadata({
-        title, artist,
-        album:   album || 'ChloroWave',
-        artwork
-    });
-    navigator.mediaSession.playbackState = 'playing';
+    const artwork = coverUrl ? [{ src: coverUrl, sizes: '250x250', type: 'image/jpeg' }] : [{ src: 'https://bluegrayink.github.io/chlorowave/icon.png', sizes: '192x192', type: 'image/png' }];
+    navigator.mediaSession.metadata = new MediaMetadata({ title, artist, album: album || 'ChloroWave', artwork });
 }
 
 function updateMediaSessionCover(coverUrl) {
     if (!('mediaSession' in navigator) || !navigator.mediaSession.metadata) return;
-    if (coverUrl) {
-        navigator.mediaSession.metadata.artwork = [
-            { src: coverUrl, sizes: '250x250', type: 'image/jpeg' }
-        ];
-    }
+    if (coverUrl) navigator.mediaSession.metadata.artwork = [{ src: coverUrl, sizes: '250x250', type: 'image/jpeg' }];
 }
 
 // ============================================================
-//  HELPERS
+//  XSS SANITIZER
 // ============================================================
 function sanitize(str) {
     return str.replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
