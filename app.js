@@ -1,5 +1,5 @@
 // ============================================================
-//  CHLOROWAVE — app.js (UPDATED FULL CODE)
+//  CHLOROWAVE — app.js (FIXED LOGIC & COUPLING)
 //  Features: Cover Art (MusicBrainz), Shuffle, Repeat, Mini Player
 // ============================================================
 
@@ -26,9 +26,9 @@ let audioCtx     = null;
 let analyser     = null;
 let sourceNode   = null;
 let animFrameId  = null;
-let coverCache   = {}; // cache cover art per song name
-let shuffleQueue    = []; // lagu yang belum diputar di shuffle saat ini
-let shufflePlayed   = []; // lagu yang sudah diputar di shuffle ini
+let coverCache   = {}; 
+let shuffleQueue    = []; 
+let shufflePlayed   = []; 
 let regData = { email: '', shareUrl: '' };
 
 // ============================================================
@@ -81,37 +81,34 @@ document.addEventListener('click', touchSession);
 window.addEventListener('load', async () => {
     const params = new URLSearchParams(window.location.search);
     
-    // Simpan kode referral dari URL ?ref= jika ada
     const refCode = params.get('ref');
     if (refCode) {
         localStorage.setItem('cw_ref', refCode.toUpperCase());
     }
 
-    // Cek callback dari Temanqris setelah bayar sukses
     if (params.get('payment') === 'success') {
         const email    = params.get('email');
         const shareUrl = params.get('share') || localStorage.getItem('cw_reg_shareUrl') || '';
         if (email) {
             try {
                 const refBy = localStorage.getItem('cw_ref') || '';
-                // Daftarkan ulang ke GAS dengan status sukses terbayar otomatis
                 await fetch(`${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=QRIS-TEMANQRIS&refBy=${encodeURIComponent(refBy)}`);
             } catch(err) { console.error('GAS register error:', err); }
             localStorage.setItem('cw_status', 'pending');
             localStorage.setItem('cw_email',  email);
             window.history.replaceState({}, '', window.location.pathname);
-            document.getElementById('pending-email-display').textContent = email;
+            
+            const pendingDisplay = document.getElementById('pending-email-display');
+            if(pendingDisplay) pendingDisplay.textContent = email;
             showScreen('screen-pending');
             return;
         }
     }
 
-    // Bersihkan parameter URL agar tidak mengganggu loading ulang halaman
     if (params.has('ref') || params.has('payment')) {
         window.history.replaceState({}, '', window.location.pathname);
     }
 
-    // Cek session aktif
     const session = loadSession();
     if (session && session.token && session.email) {
         accessToken = session.token;
@@ -125,7 +122,8 @@ window.addEventListener('load', async () => {
     const status = localStorage.getItem('cw_status');
     const email  = localStorage.getItem('cw_email');
     if (status === 'pending' && email) {
-        document.getElementById('pending-email-display').textContent = email;
+        const pendingDisplay = document.getElementById('pending-email-display');
+        if(pendingDisplay) pendingDisplay.textContent = email;
         showScreen('screen-pending');
     } else {
         showScreen('screen-landing');
@@ -133,25 +131,34 @@ window.addEventListener('load', async () => {
 });
 
 // ============================================================
-//  REGISTRASI & INTEGRASI TEMANQRIS
+//  FIXED LOGIC: MENYESUAIKAN DENGAN FORMAT FORMAT LAYOUT LAMA
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
-    const regForm = document.getElementById('reg-form');
+    // FIX: Menggunakan querySelector karena di HTML bawaan menggunakan class (.reg-form) bukan ID
+    const regForm = document.querySelector('.reg-form') || document.getElementById('reg-form');
     if (!regForm) return;
 
     regForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const errEl     = document.getElementById('reg-error');
-        const submitBtn = document.getElementById('reg-submit-btn');
+        
+        // Membaca elemen error & submit-btn berdasarkan layout aslimu
+        const errEl     = document.getElementById('reg-error') || regForm.querySelector('.error-msg');
+        const submitBtn = document.getElementById('reg-submit-btn') || regForm.querySelector('button[type="submit"]');
 
-        const prefix   = document.getElementById('f-email').value.trim().toLowerCase().replace(/@.*/, '');
+        // Mengambil input values berdasarkan tipe / urutan layout aslimu
+        const emailInput = document.getElementById('f-email') || regForm.querySelector('input[type="text"]');
+        const shareInput = document.getElementById('f-share') || regForm.querySelector('input[type="url"]') || regForm.querySelectorAll('input')[1];
+
+        if (!emailInput || !shareInput) return;
+
+        const prefix   = emailInput.value.trim().toLowerCase().replace(/@.*/, '');
         const email    = prefix + '@gmail.com';
-        const shareUrl = document.getElementById('f-share').value.trim();
+        const shareUrl = shareInput.value.trim();
 
-        if (!prefix) { showError(errEl, 'Masukkan nama akun Gmail kamu'); return; }
-        if (!shareUrl) { showError(errEl, 'Masukkan link share sosmed kamu'); return; }
+        if (!prefix) { if(errEl) showError(errEl, 'Masukkan nama akun Gmail kamu'); return; }
+        if (!shareUrl) { if(errEl) showError(errEl, 'Masukkan link share sosmed kamu'); return; }
 
-        errEl.classList.add('hidden');
+        if(errEl) errEl.classList.add('hidden');
         const refBy = localStorage.getItem('cw_ref') || '';
 
         regData = { email, shareUrl };
@@ -159,37 +166,41 @@ window.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('cw_reg_shareUrl', shareUrl);
 
         try {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan Server...';
+            if(submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+            }
             
-            // Kirim entri data pendaftaran awal ke Google Sheet dengan status pending pembayaran
+            // Kirim entri data registrasi ke Google Apps Script
             await fetch(`${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=PENDING-QRIS&refBy=${encodeURIComponent(refBy)}`);
             
-            // Inisialisasi Tombol QRIS Widget
-            initTemanqrisWidget(email, shareUrl);
+            // Inisialisasi Tombol QRIS Widget langsung disisipkan di dalam form agar layout aman
+            initTemanqrisWidget(email, shareUrl, regForm);
 
-            submitBtn.style.display = 'none';
-            document.getElementById('f-email').disabled = true;
-            document.getElementById('f-share').disabled = true;
-
-            const info = document.createElement('p');
-            info.className = 'reg-footer-note';
-            info.style.color = 'var(--green)';
-            info.style.marginTop = '15px';
-            info.innerHTML = '<i class="fa-solid fa-check-circle"></i> Data tersimpan! Silakan klik tombol QRIS di bawah untuk menyelesaikan pembayaran.';
-            submitBtn.parentNode.insertBefore(info, submitBtn);
+            if(submitBtn) submitBtn.style.display = 'none';
+            emailInput.disabled = true;
+            shareInput.disabled = true;
 
         } catch(err) {
-            showError(errEl, 'Gagal menghubungi server database. Coba sesaat lagi.');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Lanjutkan Pembayaran';
+            if(errEl) showError(errEl, 'Gagal menghubungi server database. Coba sesaat lagi.');
+            if(submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Lanjutkan Pembayaran';
+            }
         }
     });
 });
 
-function initTemanqrisWidget(email, shareUrl) {
-    const container = document.getElementById('qr-widget-container');
-    if (!container) return;
+// FIX LOGIC: Membuat container widget dinamis agar tidak merusak susunan struktur HTML asli
+function initTemanqrisWidget(email, shareUrl, formElement) {
+    let container = document.getElementById('qr-widget-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'qr-widget-container';
+        container.style.marginTop = '20px';
+        container.style.textAlign = 'center';
+        formElement.appendChild(container); // Masukkan otomatis di paling bawah form
+    }
     container.innerHTML = '';
 
     const callbackUrl = window.location.origin + window.location.pathname +
@@ -219,7 +230,7 @@ function showError(el, msg) { el.textContent = msg; el.classList.remove('hidden'
 // ============================================================
 function tryLogin() {
     if (typeof google === 'undefined') {
-        alert('Layanan Google GSI gagal dimuat. Periksa koneksi internet dan muat ulang halaman.');
+        alert('Layanan Google GSI gagal dimuat. Periksa koneksi internet.');
         return;
     }
     const client = google.accounts.oauth2.initTokenClient({
@@ -250,7 +261,8 @@ async function handlePostLogin() {
         if (isWhitelisted) {
             onLoginSuccess(user);
         } else {
-            document.getElementById('denied-email').textContent = userEmail;
+            const deniedEmailEl = document.getElementById('denied-email');
+            if(deniedEmailEl) deniedEmailEl.textContent = userEmail;
             openModal('modal-denied');
             accessToken = null; userEmail = null;
         }
@@ -302,7 +314,8 @@ function updateRefUI(refCode) {
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
-    document.getElementById('username-display').textContent = '👤 ' + name;
+    const display = document.getElementById('username-display');
+    if (display) display.textContent = '👤 ' + name;
     showRefCode();
 }
 
@@ -346,7 +359,10 @@ function showRefCode() {
     if (linkEl) linkEl.value = link;
 }
 
-function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
+function toggleUserMenu() { 
+    const menu = document.getElementById('user-menu');
+    if(menu) menu.classList.toggle('hidden'); 
+}
 
 document.addEventListener('click', (e) => {
     const menu    = document.getElementById('user-menu');
@@ -355,12 +371,15 @@ document.addEventListener('click', (e) => {
 });
 
 function saveUsername() {
-    const val = document.getElementById('edit-username-input').value.trim();
+    const input = document.getElementById('edit-username-input');
+    if(!input) return;
+    const val = input.value.trim();
     if (val) {
         localStorage.setItem('cw_username', val);
         updateUsernameUI();
-        document.getElementById('edit-username-input').value = '';
-        document.getElementById('user-menu').classList.add('hidden');
+        input.value = '';
+        const menu = document.getElementById('user-menu');
+        if(menu) menu.classList.add('hidden');
     }
 }
 
@@ -382,16 +401,19 @@ function resetPending() {
     }
 }
 
-function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function openModal(id)  { const el = document.getElementById(id); if(el) el.classList.remove('hidden'); }
+function closeModal(id) { const el = document.getElementById(id); if(el) el.classList.add('hidden'); }
 
 // ============================================================
 //  GOOGLE DRIVE MEDIA LOADER
 // ============================================================
 async function fetchSongsFromDrive() {
     const listEl = document.getElementById('playlist-ui');
+    if(!listEl) return;
     listEl.innerHTML = '<li class="playlist-loading"><i class="fa-solid fa-spinner fa-spin"></i> Mencari folder chlorowave...</li>';
-    document.getElementById('song-count').textContent = '';
+    
+    const countEl = document.getElementById('song-count');
+    if(countEl) countEl.textContent = '';
 
     try {
         const folderQuery = encodeURIComponent(`name='${CONFIG.FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
@@ -405,14 +427,7 @@ async function fetchSongsFromDrive() {
                 <li class="folder-not-found">
                     <div class="fnf-icon"><i class="fa-solid fa-folder-open"></i></div>
                     <div class="fnf-title">Folder 'chlorowave' Tidak Ditemukan</div>
-                    <div class="fnf-desc">Silakan buat folder baru bernama <code>chlorowave</code> di Google Drive Anda, lalu isi dengan lagu-lagu kesukaan Anda.</div>
-                    <div class="fnf-steps">
-                        <div class="fnf-step"><span class="fnf-num">1</span><span>Buka <a href="https://drive.google.com" target="_blank">Google Drive</a></span></div>
-                        <div class="fnf-step"><span class="fnf-num">2</span><span>Klik tombol <strong>+ Baru</strong> → Pilih <strong>Folder Baru</strong></span></div>
-                        <div class="fnf-step"><span class="fnf-num">3</span><span>Beri nama huruf kecil semua: <code>chlorowave</code></span></div>
-                        <div class="fnf-step"><span class="fnf-num">4</span><span>Upload berkas musik (.mp3 / .m4a) ke dalam folder tersebut</span></div>
-                        <div class="fnf-step"><span class="fnf-num">5</span><span>Klik tombol <strong>Sinkron</strong> di pojok kanan atas halaman ini</span></div>
-                    </div>
+                    <div class="fnf-desc">Silakan buat folder baru bernama <code>chlorowave</code> di Google Drive Anda.</div>
                 </li>`;
             return;
         }
@@ -421,10 +436,10 @@ async function fetchSongsFromDrive() {
         await loadFolderContents(rootFolderId);
 
         const totalSongs = playlist.length;
-        document.getElementById('song-count').textContent = `${totalSongs} lagu`;
+        if(countEl) countEl.textContent = `${totalSongs} lagu`;
 
         if (totalSongs === 0) {
-            listEl.innerHTML = '<li class="playlist-empty">Folder ditemukan, namun belum ada musik di dalamnya. Ayo upload lagumu!</li>';
+            listEl.innerHTML = '<li class="playlist-empty">Folder ditemukan, namun belum ada musik di dalamnya.</li>';
             return;
         }
 
@@ -432,7 +447,7 @@ async function fetchSongsFromDrive() {
         setupMediaSession();
 
     } catch (err) {
-        document.getElementById('playlist-ui').innerHTML = `<li class="playlist-error">Gagal sinkronisasi: ${err.message}</li>`;
+        listEl.innerHTML = `<li class="playlist-error">Gagal sinkronisasi: ${err.message}</li>`;
     }
 }
 
@@ -491,6 +506,7 @@ function isAudioFile(file) {
 // ============================================================
 function renderPlaylist() {
     const listEl = document.getElementById('playlist-ui');
+    if(!listEl) return;
     let html     = '';
 
     const rootSongs = playlist.filter(s => s.playlistName === null);
@@ -527,9 +543,6 @@ function trackHTML(idx, song) {
         </li>`;
 }
 
-// ============================================================
-//  METADATA & ARTWORK DECORATOR (MusicBrainz Archive)
-// ============================================================
 function parseSongName(filename) {
     const match = filename.match(/^(.+?)\s*[-–]\s*(.+)$/);
     if (match) return { artist: match[1].trim(), title: match[2].trim() };
@@ -567,14 +580,16 @@ async function updateCoverArt(songName, idx) {
     const parsed      = parseSongName(songName);
     const colors      = gradientColors(songName);
 
-    playerCover.style.background = `linear-gradient(135deg,${colors[0]},${colors[1]})`;
+    if(playerCover) playerCover.style.background = `linear-gradient(135deg,${colors[0]},${colors[1]})`;
     if (playerInit) playerInit.textContent = parsed.artist ? parsed.artist[0].toUpperCase() : songName[0].toUpperCase();
 
     const coverUrl = await fetchCoverArt(songName);
     if (coverUrl) {
-        playerCover.style.backgroundImage = `url('${coverUrl}')`;
-        playerCover.style.backgroundSize  = 'cover';
-        playerCover.style.backgroundPosition = 'center';
+        if(playerCover) {
+            playerCover.style.backgroundImage = `url('${coverUrl}')`;
+            playerCover.style.backgroundSize  = 'cover';
+            playerCover.style.backgroundPosition = 'center';
+        }
 
         const thumb = document.getElementById(`thumb-${idx}`);
         if (thumb) {
@@ -597,7 +612,7 @@ async function updateCoverArt(songName, idx) {
 }
 
 // ============================================================
-//  SHUFFLE, REPEAT & NAVIGATION LOGIC
+//  PLAYER OPERATION LOGIC
 // ============================================================
 function rebuildShuffleIdxs() {
     shuffleQueue  = [...Array(playlist.length).keys()];
@@ -662,15 +677,13 @@ function getPrevIdx() {
     return currentIdx <= 0 ? playlist.length - 1 : currentIdx - 1;
 }
 
-// ============================================================
-//  AUDIO PLAYER CONTEXT HANDLER
-// ============================================================
 async function playSong(idx) {
     if (idx < 0 || idx >= playlist.length) return;
 
     currentIdx = idx;
     const file   = playlist[idx];
     const player = document.getElementById('audio-player');
+    if(!player) return;
     const parsed = parseSongName(file.name.replace(/\.[^.]+$/, ''));
 
     document.querySelectorAll('#playlist-ui li.track-active').forEach(li => {
@@ -686,8 +699,10 @@ async function playSong(idx) {
     }
 
     const displayName = parsed.title || file.name.replace(/\.[^.]+$/, '');
-    document.getElementById('player-title').textContent  = displayName;
-    document.getElementById('player-artist').textContent = parsed.artist || 'ChloroWave';
+    const pTitle = document.getElementById('player-title');
+    const pArtist = document.getElementById('player-artist');
+    if(pTitle) pTitle.textContent  = displayName;
+    if(pArtist) pArtist.textContent = parsed.artist || 'ChloroWave';
 
     const miniTitle  = document.getElementById('mini-title');
     const miniArtist = document.getElementById('mini-artist');
@@ -695,7 +710,7 @@ async function playSong(idx) {
     if (miniArtist) miniArtist.textContent = parsed.artist || 'ChloroWave';
 
     try {
-        const res  = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
             headers: { Authorization: `Bearer ${accessToken}` }
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -712,7 +727,7 @@ async function playSong(idx) {
 
         if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
     } catch (err) {
-        document.getElementById('player-title').textContent = '❌ Gagal Memuat Musik';
+        if(pTitle) pTitle.textContent = '❌ Gagal Memuat Musik';
     }
 }
 
@@ -721,6 +736,7 @@ function nextSong() { if (playlist.length) playSong(getNextIdx()); }
 
 function togglePlay() {
     const player = document.getElementById('audio-player');
+    if(!player) return;
     if (player.paused) { player.play(); } else { player.pause(); }
 }
 
@@ -737,7 +753,7 @@ function updatePlayBtn(playing) {
 
 function seekTo(e) {
     const player = document.getElementById('audio-player');
-    if (!player.duration) return;
+    if (!player || !player.duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     player.currentTime = pct * player.duration;
@@ -745,7 +761,7 @@ function seekTo(e) {
 
 function miniSeekTo(e) {
     const player = document.getElementById('audio-player');
-    if (!player.duration) return;
+    if (!player || !player.duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     player.currentTime = pct * player.duration;
@@ -895,9 +911,6 @@ function updateMediaSessionCover(coverUrl) {
     if (coverUrl) navigator.mediaSession.metadata.artwork = [{ src: coverUrl, sizes: '250x250', type: 'image/jpeg' }];
 }
 
-// ============================================================
-//  XSS SANITIZER
-// ============================================================
 function sanitize(str) {
     return str.replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
 }
