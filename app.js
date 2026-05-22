@@ -76,8 +76,45 @@ document.addEventListener('click', touchSession);
 //  INIT
 // ============================================================
 window.addEventListener('load', async () => {
-    const session = loadSession();
+    // Simpan kode referral dari URL ?ref=
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
+    if (refCode) {
+        localStorage.setItem('cw_ref', refCode);
+        // Bersihkan ?ref= dari URL
+        window.history.replaceState({}, '', window.location.pathname);
+    }
 
+    // Cek callback dari Temanqris setelah bayar
+    const params2 = new URLSearchParams(window.location.search);
+    if (params2.get('payment') === 'success') {
+        const email    = params2.get('email');
+        const shareUrl = params2.get('share') || localStorage.getItem('cw_reg_shareUrl') || '';
+        if (email) {
+            // Simpan ke GAS
+            try {
+                const refBy = localStorage.getItem('cw_ref') || '';
+                await fetch(`${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=QRIS-TEMANQRIS&refBy=${encodeURIComponent(refBy)}`);
+            } catch(err) { console.error('GAS register error:', err); }
+            localStorage.setItem('cw_status', 'pending');
+            localStorage.setItem('cw_email',  email);
+            window.history.replaceState({}, '', window.location.pathname);
+            document.getElementById('pending-email-display').textContent = email;
+            showScreen('screen-pending');
+            return;
+        }
+    }
+
+    // Simpan kode referral dari URL jika ada
+    const refCode = params.get('ref');
+    if (refCode) {
+        localStorage.setItem('cw_ref', refCode.toUpperCase());
+        // Bersihkan ref dari URL tapi tetap di halaman
+        window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    // Cek session aktif
+    const session = loadSession();
     if (session && session.token && session.email) {
         accessToken = session.token;
         userEmail   = session.email;
@@ -106,8 +143,6 @@ let regData = { email: '', shareUrl: '' };
 document.getElementById('reg-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errEl     = document.getElementById('reg-error');
-    const btnText   = document.getElementById('reg-btn-text');
-    const btnLoad   = document.getElementById('reg-btn-loader');
     const submitBtn = document.getElementById('reg-submit-btn');
 
     const prefix   = document.getElementById('f-email').value.trim().toLowerCase().replace(/@.*/, '');
@@ -117,76 +152,54 @@ document.getElementById('reg-form').addEventListener('submit', async (e) => {
     if (!prefix) { showError(errEl, 'Masukkan nama akun Gmail kamu'); return; }
     if (!shareUrl) { showError(errEl, 'Masukkan link share sosmed kamu'); return; }
 
-    btnText.textContent = 'Memproses...';
-    btnLoad.classList.remove('hidden');
-    submitBtn.disabled = true;
     errEl.classList.add('hidden');
 
-    try {
-        // Simpan data ke GAS dulu dengan status 'waiting_payment'
-        const url  = `${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=QRIS-PENDING`;
-        const res  = await fetch(url);
-        const data = await res.json();
-        if (!data.ok) throw new Error('Server menolak data');
+    // Simpan data
+    regData = { email, shareUrl };
+    localStorage.setItem('cw_reg_email',    email);
+    localStorage.setItem('cw_reg_shareUrl', shareUrl);
 
-        // Simpan sementara untuk dipakai di QR
-        regData = { email, shareUrl };
-        localStorage.setItem('cw_reg_email',    email);
-        localStorage.setItem('cw_reg_shareUrl', shareUrl);
+    // Inject widget Temanqris — tombol QRIS muncul di bawah form
+    initTemanqrisWidget(email, shareUrl);
 
-        // Pindah ke step 2 — tampilkan QR
-        showRegStep(2);
-        initTemanqrisWidget(email);
+    // Sembunyikan tombol submit, ganti dengan info
+    submitBtn.style.display = 'none';
+    document.getElementById('f-email').disabled = true;
+    document.getElementById('f-share').disabled = true;
 
-    } catch (err) {
-        showError(errEl, 'Gagal memproses. Coba lagi beberapa saat.');
-    } finally {
-        btnText.textContent = 'Lanjut ke Pembayaran';
-        btnLoad.classList.add('hidden');
-        submitBtn.disabled = false;
-    }
+    const info = document.createElement('p');
+    info.className = 'reg-footer-note';
+    info.style.color = 'var(--green)';
+    info.innerHTML = '<i class="fa-solid fa-check-circle"></i> Data tersimpan. Klik tombol di bawah untuk bayar.';
+    submitBtn.parentNode.insertBefore(info, submitBtn);
 });
 
-function showRegStep(step) {
-    document.getElementById('reg-step-1').classList.toggle('hidden', step !== 1);
-    document.getElementById('reg-step-2').classList.toggle('hidden', step !== 2);
-}
-
-function backToStep1() {
-    showRegStep(1);
-    document.getElementById('qr-widget-container').innerHTML = '';
-}
-
-function initTemanqrisWidget(email) {
+function initTemanqrisWidget(email, shareUrl) {
     const container = document.getElementById('qr-widget-container');
     container.innerHTML = '';
 
-    // Buat script tag Temanqris widget dinamis
+    const callbackUrl = window.location.origin + window.location.pathname +
+        '?payment=success&email=' + encodeURIComponent(email) +
+        '&share=' + encodeURIComponent(shareUrl);
+
+    // Buat div dengan atribut Temanqris (widget.js baca dari div, bukan script tag)
+    const div = document.createElement('div');
+    div.setAttribute('data-temanqris',       '');
+    div.setAttribute('data-merchant',        CONFIG.TEMANQRIS_MERCHANT);
+    div.setAttribute('data-amount',          CONFIG.TEMANQRIS_AMOUNT);
+    div.setAttribute('data-button-text',     'Bayar Rp 100.000 dengan QRIS');
+    div.setAttribute('data-button-color',    '#1DB954');
+    div.setAttribute('data-description',     'ChloroWave-' + email);
+    div.setAttribute('data-callback',        callbackUrl);
+    div.setAttribute('data-webhook',         CONFIG.GAS_ENDPOINT + '?action=paymentWebhook');
+    container.appendChild(div);
+
+    // Inject script baru dengan timestamp agar tidak di-cache
     const script = document.createElement('script');
-    script.src = 'https://temanqris.com/widget.js';
-    script.setAttribute('data-merchant',     CONFIG.TEMANQRIS_MERCHANT);
-    script.setAttribute('data-amount',       CONFIG.TEMANQRIS_AMOUNT);
-    script.setAttribute('data-button-text',  'Bayar dengan QRIS');
-    script.setAttribute('data-button-color', '#1DB954');
-    script.setAttribute('data-description',  `ChloroWave-${email}`);
-    script.setAttribute('data-callback',     `${window.location.origin}${window.location.pathname}?payment=success&email=${encodeURIComponent(email)}`);
-    script.setAttribute('data-webhook',      `${CONFIG.GAS_ENDPOINT}?action=paymentWebhook`);
-    container.appendChild(script);
+    script.src = 'https://temanqris.com/widget.js?t=' + Date.now();
+    document.body.appendChild(script);
 }
 
-// Cek apakah callback dari payment berhasil
-window.addEventListener('load', () => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('payment') === 'success') {
-        const email = params.get('email');
-        if (email) {
-            localStorage.setItem('cw_status', 'pending');
-            localStorage.setItem('cw_email',  email);
-            // Bersihkan URL
-            window.history.replaceState({}, '', window.location.pathname);
-        }
-    }
-});
 
 function showError(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
 
@@ -248,11 +261,43 @@ function onLoginSuccess(user) {
     }
     localStorage.setItem('cw_status', 'active');
     localStorage.setItem('cw_email',  userEmail);
-    // Simpan session agar tidak login ulang saat refresh
     saveSession(accessToken, userEmail);
     updateUsernameUI();
     showScreen('screen-app');
     fetchSongsFromDrive();
+    fetchAndShowRefCode(userEmail);
+}
+
+async function fetchAndShowRefCode(email) {
+    try {
+        const res  = await fetch(`${CONFIG.GAS_ENDPOINT}?action=getReferralCode&email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        if (data.ok && data.refCode) {
+            localStorage.setItem('cw_my_ref', data.refCode);
+            updateRefUI(data.refCode);
+        }
+    } catch (err) { console.error('Ref code error:', err); }
+}
+
+function updateRefUI(refCode) {
+    if (!refCode) return;
+    const display = document.getElementById('ref-code-display');
+    if (display) display.textContent = refCode;
+}
+
+function copyRefLink() {
+    const refCode = localStorage.getItem('cw_my_ref') || '';
+    if (!refCode) return;
+    const link = window.location.origin + window.location.pathname + '?ref=' + refCode;
+    navigator.clipboard.writeText(link).then(() => {
+        const btn = document.getElementById('copy-ref-btn');
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersalin!';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-copy"></i> Salin Link';
+            }, 2000);
+        }
+    });
 }
 
 // ============================================================
@@ -260,7 +305,40 @@ function onLoginSuccess(user) {
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
-    document.getElementById('username-display').textContent = name;
+    document.getElementById('username-display').textContent = '👤 ' + name;
+    // Update ref code display jika menu terbuka
+    showRefCode();
+}
+
+function generateRefCode(email) {
+    // Format: nama depan email + 4 angka unik dari email hash
+    const prefix = email.split('@')[0].replace(/[^a-z0-9]/gi, '').substring(0, 8).toUpperCase();
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) {
+        hash = ((hash << 5) - hash) + email.charCodeAt(i);
+        hash |= 0;
+    }
+    const num = Math.abs(hash) % 9000 + 1000;
+    return prefix + num;
+}
+
+function getRefLink() {
+    if (!userEmail) return '';
+    const code = generateRefCode(userEmail);
+    return `${window.location.origin}${window.location.pathname}?ref=${code}`;
+}
+
+function copyRefLink() {
+    const link = getRefLink();
+    navigator.clipboard.writeText(link).then(() => {
+        const btn = document.getElementById('copy-ref-btn');
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersalin!';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-copy"></i> Salin Link';
+            }, 2000);
+        }
+    });
 }
 
 function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
@@ -279,6 +357,54 @@ function saveUsername() {
         document.getElementById('edit-username-input').value = '';
         document.getElementById('user-menu').classList.add('hidden');
     }
+}
+
+// ============================================================
+//  REFERRAL SYSTEM
+// ============================================================
+function generateRefCode(username) {
+    const clean = username.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6);
+    const num   = Math.floor(1000 + Math.random() * 9000);
+    return clean + num;
+}
+
+function getMyRefCode() {
+    let code = localStorage.getItem('cw_myref');
+    if (!code) {
+        const username = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'USER';
+        code = generateRefCode(username);
+        localStorage.setItem('cw_myref', code);
+    }
+    return code;
+}
+
+function getMyRefLink() {
+    return `${window.location.origin}${window.location.pathname}?ref=${getMyRefCode()}`;
+}
+
+function copyRefLink() {
+    const link = getMyRefLink();
+    navigator.clipboard.writeText(link).then(() => {
+        const btn = document.getElementById('copy-ref-btn');
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersalin!';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-copy"></i> Salin Link';
+            }, 2000);
+        }
+    });
+}
+
+function showRefCode() {
+    const code = getMyRefCode();
+    const link = getMyRefLink();
+    const el   = document.getElementById('ref-code-display');
+    if (el) {
+        el.textContent = code;
+        el.style.display = 'block';
+    }
+    const linkEl = document.getElementById('ref-link-display');
+    if (linkEl) linkEl.value = link;
 }
 
 function logout() {
@@ -649,7 +775,7 @@ async function playSong(idx) {
     }
 
     const displayName = parsed.title || file.name.replace(/\.[^.]+$/, '');
-    songEl.textContent = 'Memuat...';
+    songEl.textContent = '⏳ Memuat...';
 
     // Update player info
     document.getElementById('player-title').textContent  = displayName;
@@ -683,7 +809,7 @@ async function playSong(idx) {
         if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
 
     } catch (err) {
-        songEl.textContent = 'Gagal memutar: ' + file.name;
+        songEl.textContent = '⚠ Gagal memutar: ' + file.name;
     }
 }
 
