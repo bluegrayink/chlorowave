@@ -6,7 +6,7 @@
     <meta name="google-site-verification" content="mfLS75-16VBBP7CixDWnOHiGVjnJYvzcb_xCfykkSA4" />
     <title>ChloroWave</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" />
     <link rel="manifest" href="manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -23,7 +23,9 @@
                 <i class="fa-solid fa-wave-square logo-icon"></i>
                 <h1 class="logo-text">ChloroWave</h1>
             </div>
-            <p class="landing-tagline">Nikmati koleksi lagu dari Google Drive pribadimu dengan kualitas audio premium tanpa batas, tanpa iklan.</p>
+            <p class="landing-tagline">
+                Nikmati koleksi lagu dari Google Drive pribadimu dengan kualitas audio premium tanpa batas, tanpa iklan.
+            </p>
             
             <div class="landing-actions">
                 <button class="btn-primary" onclick="tryLogin()">
@@ -35,7 +37,9 @@
             </div>
 
             <div class="landing-footer">
-                <a href="#" onclick="openModal('modal-guide')"><i class="fa-solid fa-circle-info"></i> Panduan Penggunaan</a>
+                <a href="#" onclick="openModal('modal-guide')">
+                    <i class="fa-solid fa-circle-info"></i> Panduan Penggunaan
+                </a>
             </div>
         </div>
     </div>
@@ -48,9 +52,9 @@
                 <p class="reg-subtitle">Langkah awal menikmati kualitas audio premium tanpa batas.</p>
             </div>
 
-            <div id="reg-error" class="error-msg hidden"></div>
+            <div class="error-msg hidden"></div>
 
-            <form id="reg-form">
+            <form class="reg-form" id="reg-form">
                 <div class="form-group">
                     <label class="form-label">Gmail Kamu</label>
                     <div class="input-wrapper">
@@ -74,8 +78,6 @@
                     <i class="fa-solid fa-arrow-right"></i> Lanjutkan Pembayaran
                 </button>
             </form>
-
-            <div id="qr-widget-container" style="margin-top: 20px; text-align: center;"></div>
 
             <div class="reg-footer">
                 Sudah mendaftar dan bayar? <a href="#" onclick="showScreen('screen-landing')">Kembali ke Login</a>
@@ -160,7 +162,7 @@
 
                     <div class="player-timeline">
                         <span class="time-label" id="time-current">0:00</span>
-                        <div class="timeline-slider-bg" onclick="seekTo(e)">
+                        <div class="timeline-slider-bg" onclick="seekTo(event)">
                             <div class="timeline-slider-fill" id="progress-bar"></div>
                         </div>
                         <span class="time-label" id="time-total">0:00</span>
@@ -206,7 +208,7 @@
         <audio id="audio-player" crossorigin="anonymous"></audio>
 
         <div class="mini-player hidden" id="mini-player" onclick="document.getElementById('screen-app').scrollIntoView({behavior:'smooth'})">
-            <div class="mini-progress-bg" onclick="e.stopPropagation(); miniSeekTo(e)">
+            <div class="mini-progress-bg" onclick="event.stopPropagation(); miniSeekTo(event)">
                 <div class="mini-progress-fill" id="mini-progress-bar"></div>
             </div>
             <div class="mini-player-content">
@@ -217,7 +219,7 @@
                         <span class="mini-track-artist" id="mini-artist">Nama Artis</span>
                     </div>
                 </div>
-                <div class="mp-right" onclick="e.stopPropagation()">
+                <div class="mp-right" onclick="event.stopPropagation()">
                     <button class="mp-ctrl" onclick="prevSong()"><i class="fa-solid fa-backward-step"></i></button>
                     <button class="mp-ctrl mp-play-btn" onclick="togglePlay()">
                         <i class="fa-solid fa-play" id="mini-play-icon"></i>
@@ -251,25 +253,23 @@
                 <div class="guide-step">
                     <div class="step-num">2</div>
                     <div class="step-body">
-                        <strong>Klik <em>"Go to ChloroWave (unsafe)"</em></strong>
-                        <p>Jangan khawatir, aplikasi ini hanya meminta akses baca berkas musik kamu. Data akun lainnya tetap aman bersama Google.</p>
-                    </div>
-                </div>
-                <div class="guide-step">
-                    <div class="step-num">3</div>
-                    <div class="step-body">
-                        <strong>Klik tombol <em>"Continue / Allow"</em></strong>
-                        <p>Centang izin akses Google Drive, lalu berikan konfirmasi akhir untuk menyelesaikan sinkronisasi folder musik.</p>
+                        <strong>Klik <em>"Go to ChloroWave"</em> lalu <em>"Allow"</em></strong>
+                        <p>Klik teks yang muncul di bawah, lalu klik <strong>Allow</strong> untuk izinkan akses Drive.</p>
+                        <div class="step-img-placeholder">
+                            <i class="fa-solid fa-check-circle" style="color:var(--green)"></i>
+                            <span>Go to ChloroWave (unsafe) ? Allow ? <strong>Selesai!</strong></span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="guide-footer-note">
-                <i class="fa-solid fa-rotate-left"></i> Peringatan verifikasi ini hanya muncul <strong>sekali</strong> saat setup awal.
+                <i class="fa-solid fa-rotate-left"></i>
+                Login berikutnya langsung masuk — peringatan ini hanya muncul <strong>sekali</strong>.
             </div>
 
-            <button class="btn-primary" onclick="closeModal('modal-guide'); tryLogin();" style="width:100%; margin-top:16px">
-                <i class="fa-solid fa-arrow-right"></i> Saya Mengerti, Lanjutkan Login
+            <button class="btn-primary" onclick="closeModal('modal-guide')" style="width:100%;margin-top:16px">
+                <i class="fa-solid fa-arrow-right"></i> Mengerti, Lanjutkan Login
             </button>
         </div>
     </div>
