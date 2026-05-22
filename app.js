@@ -27,6 +27,8 @@ let analyser     = null;
 let sourceNode   = null;
 let animFrameId  = null;
 let coverCache   = {}; // cache cover art per song name
+let shuffleQueue    = []; // lagu yang belum diputar di shuffle saat ini
+let shufflePlayed   = []; // lagu yang sudah diputar di shuffle ini
 
 // ============================================================
 //  SCREEN NAVIGATION
@@ -76,22 +78,19 @@ document.addEventListener('click', touchSession);
 //  INIT
 // ============================================================
 window.addEventListener('load', async () => {
-    // Simpan kode referral dari URL ?ref=
     const params = new URLSearchParams(window.location.search);
+    
+    // Simpan kode referral dari URL ?ref= jika ada
     const refCode = params.get('ref');
     if (refCode) {
-        localStorage.setItem('cw_ref', refCode);
-        // Bersihkan ?ref= dari URL
-        window.history.replaceState({}, '', window.location.pathname);
+        localStorage.setItem('cw_ref', refCode.toUpperCase());
     }
 
     // Cek callback dari Temanqris setelah bayar
-    const params2 = new URLSearchParams(window.location.search);
-    if (params2.get('payment') === 'success') {
-        const email    = params2.get('email');
-        const shareUrl = params2.get('share') || localStorage.getItem('cw_reg_shareUrl') || '';
+    if (params.get('payment') === 'success') {
+        const email    = params.get('email');
+        const shareUrl = params.get('share') || localStorage.getItem('cw_reg_shareUrl') || '';
         if (email) {
-            // Simpan ke GAS
             try {
                 const refBy = localStorage.getItem('cw_ref') || '';
                 await fetch(`${CONFIG.GAS_ENDPOINT}?action=register&email=${encodeURIComponent(email)}&shareUrl=${encodeURIComponent(shareUrl)}&refNum=QRIS-TEMANQRIS&refBy=${encodeURIComponent(refBy)}`);
@@ -105,11 +104,8 @@ window.addEventListener('load', async () => {
         }
     }
 
-    // Simpan kode referral dari URL jika ada
-    const refCode = params.get('ref');
-    if (refCode) {
-        localStorage.setItem('cw_ref', refCode.toUpperCase());
-        // Bersihkan ref dari URL tapi tetap di halaman
+    // Bersihkan parameter URL agar rapi
+    if (params.has('ref') || params.has('payment')) {
         window.history.replaceState({}, '', window.location.pathname);
     }
 
@@ -137,7 +133,6 @@ window.addEventListener('load', async () => {
 // ============================================================
 //  REGISTRASI
 // ============================================================
-// Simpan data registrasi sementara
 let regData = { email: '', shareUrl: '' };
 
 document.getElementById('reg-form').addEventListener('submit', async (e) => {
@@ -154,15 +149,12 @@ document.getElementById('reg-form').addEventListener('submit', async (e) => {
 
     errEl.classList.add('hidden');
 
-    // Simpan data
     regData = { email, shareUrl };
     localStorage.setItem('cw_reg_email',    email);
     localStorage.setItem('cw_reg_shareUrl', shareUrl);
 
-    // Inject widget Temanqris — tombol QRIS muncul di bawah form
     initTemanqrisWidget(email, shareUrl);
 
-    // Sembunyikan tombol submit, ganti dengan info
     submitBtn.style.display = 'none';
     document.getElementById('f-email').disabled = true;
     document.getElementById('f-share').disabled = true;
@@ -182,7 +174,6 @@ function initTemanqrisWidget(email, shareUrl) {
         '?payment=success&email=' + encodeURIComponent(email) +
         '&share=' + encodeURIComponent(shareUrl);
 
-    // Buat div dengan atribut Temanqris (widget.js baca dari div, bukan script tag)
     const div = document.createElement('div');
     div.setAttribute('data-temanqris',       '');
     div.setAttribute('data-merchant',        CONFIG.TEMANQRIS_MERCHANT);
@@ -194,12 +185,10 @@ function initTemanqrisWidget(email, shareUrl) {
     div.setAttribute('data-webhook',         CONFIG.GAS_ENDPOINT + '?action=paymentWebhook');
     container.appendChild(div);
 
-    // Inject script baru dengan timestamp agar tidak di-cache
     const script = document.createElement('script');
     script.src = 'https://temanqris.com/widget.js?t=' + Date.now();
     document.body.appendChild(script);
 }
-
 
 function showError(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
 
@@ -285,97 +274,24 @@ function updateRefUI(refCode) {
     if (display) display.textContent = refCode;
 }
 
-function copyRefLink() {
-    const refCode = localStorage.getItem('cw_my_ref') || '';
-    if (!refCode) return;
-    const link = window.location.origin + window.location.pathname + '?ref=' + refCode;
-    navigator.clipboard.writeText(link).then(() => {
-        const btn = document.getElementById('copy-ref-btn');
-        if (btn) {
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersalin!';
-            setTimeout(() => {
-                btn.innerHTML = '<i class="fa-solid fa-copy"></i> Salin Link';
-            }, 2000);
-        }
-    });
-}
-
 // ============================================================
-//  USER PROFILE
+//  USER PROFILE & REFERRAL SYSTEM
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
     document.getElementById('username-display').textContent = '👤 ' + name;
-    // Update ref code display jika menu terbuka
     showRefCode();
 }
 
-function generateRefCode(email) {
-    // Format: nama depan email + 4 angka unik dari email hash
-    const prefix = email.split('@')[0].replace(/[^a-z0-9]/gi, '').substring(0, 8).toUpperCase();
-    let hash = 0;
-    for (let i = 0; i < email.length; i++) {
-        hash = ((hash << 5) - hash) + email.charCodeAt(i);
-        hash |= 0;
-    }
-    const num = Math.abs(hash) % 9000 + 1000;
-    return prefix + num;
-}
-
-function getRefLink() {
-    if (!userEmail) return '';
-    const code = generateRefCode(userEmail);
-    return `${window.location.origin}${window.location.pathname}?ref=${code}`;
-}
-
-function copyRefLink() {
-    const link = getRefLink();
-    navigator.clipboard.writeText(link).then(() => {
-        const btn = document.getElementById('copy-ref-btn');
-        if (btn) {
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersalin!';
-            setTimeout(() => {
-                btn.innerHTML = '<i class="fa-solid fa-copy"></i> Salin Link';
-            }, 2000);
-        }
-    });
-}
-
-function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
-
-document.addEventListener('click', (e) => {
-    const menu    = document.getElementById('user-menu');
-    const profile = document.getElementById('user-profile');
-    if (menu && !profile?.contains(e.target)) menu.classList.add('hidden');
-});
-
-function saveUsername() {
-    const val = document.getElementById('edit-username-input').value.trim();
-    if (val) {
-        localStorage.setItem('cw_username', val);
-        updateUsernameUI();
-        document.getElementById('edit-username-input').value = '';
-        document.getElementById('user-menu').classList.add('hidden');
-    }
-}
-
-// ============================================================
-//  REFERRAL SYSTEM
-// ============================================================
-function generateRefCode(username) {
-    const clean = username.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6);
-    const num   = Math.floor(1000 + Math.random() * 9000);
-    return clean + num;
-}
-
 function getMyRefCode() {
-    let code = localStorage.getItem('cw_myref');
-    if (!code) {
-        const username = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'USER';
-        code = generateRefCode(username);
-        localStorage.setItem('cw_myref', code);
+    let code = localStorage.getItem('cw_my_ref');
+    if (!code && userEmail) {
+        const prefix = userEmail.split('@')[0].replace(/[^a-z0-9]/gi, '').substring(0, 6).toUpperCase();
+        const num = Math.floor(1000 + Math.random() * 9000);
+        code = prefix + num;
+        localStorage.setItem('cw_my_ref', code);
     }
-    return code;
+    return code || 'USER1234';
 }
 
 function getMyRefLink() {
@@ -405,6 +321,24 @@ function showRefCode() {
     }
     const linkEl = document.getElementById('ref-link-display');
     if (linkEl) linkEl.value = link;
+}
+
+function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
+
+document.addEventListener('click', (e) => {
+    const menu    = document.getElementById('user-menu');
+    const profile = document.getElementById('user-profile');
+    if (menu && !profile?.contains(e.target)) menu.classList.add('hidden');
+});
+
+function saveUsername() {
+    const val = document.getElementById('edit-username-input').value.trim();
+    if (val) {
+        localStorage.setItem('cw_username', val);
+        updateUsernameUI();
+        document.getElementById('edit-username-input').value = '';
+        document.getElementById('user-menu').classList.add('hidden');
+    }
 }
 
 function logout() {
@@ -451,7 +385,7 @@ async function fetchSongsFromDrive() {
                     <div class="fnf-desc">Buat folder <code>chlorowave</code> di Google Drive kamu, lalu upload lagu ke dalamnya.</div>
                     <div class="fnf-steps">
                         <div class="fnf-step"><span class="fnf-num">1</span><span>Buka <a href="https://drive.google.com" target="_blank">Google Drive</a></span></div>
-                        <div class="fnf-step"><span class="fnf-num">2</span><span>Klik <strong>+ New</strong> → <strong>Folder</strong></span></div>
+                        <div class="fnf-step"><span class="fnf-num">2</span><span>Klik <strong>+ New</strong> ? <strong>Folder</strong></span></div>
                         <div class="fnf-step"><span class="fnf-num">3</span><span>Beri nama persis: <code>chlorowave</code></span></div>
                         <div class="fnf-step"><span class="fnf-num">4</span><span>Upload lagu ke folder tersebut</span></div>
                         <div class="fnf-step"><span class="fnf-num">5</span><span>Klik tombol <strong>Refresh</strong> di atas</span></div>
@@ -521,7 +455,6 @@ async function loadFolderContents(folderId) {
         }
     }
 
-    // Build shuffle index
     rebuildShuffleIdxs();
 }
 
@@ -567,7 +500,7 @@ function trackHTML(idx, song) {
                 <span class="track-name">${sanitize(parsed.title || name)}</span>
                 ${parsed.artist ? `<span class="track-artist">${sanitize(parsed.artist)}</span>` : ''}
             </div>
-            <span class="track-icon" id="bar-${idx}">♪</span>
+            <span class="track-icon" id="bar-${idx}">▶</span>
         </li>`;
 }
 
@@ -575,7 +508,6 @@ function trackHTML(idx, song) {
 //  COVER ART — MusicBrainz + Cover Art Archive
 // ============================================================
 function parseSongName(filename) {
-    // Format: "Artist - Title" atau "Title"
     const match = filename.match(/^(.+?)\s*[-–]\s*(.+)$/);
     if (match) return { artist: match[1].trim(), title: match[2].trim() };
     return { artist: null, title: filename };
@@ -598,7 +530,6 @@ async function fetchCoverArt(songName) {
         : `recording:"${parsed.title}"`;
 
     try {
-        // 1. Cari di MusicBrainz
         const mbRes  = await fetch(
             `https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(query)}&limit=1&fmt=json`,
             { headers: { 'User-Agent': 'ChloroWave/1.0 (cs.chlorowave@gmail.com)' } }
@@ -611,7 +542,6 @@ async function fetchCoverArt(songName) {
         const releaseId = recording.releases?.[0]?.id;
         if (!releaseId) return null;
 
-        // 2. Ambil cover dari Cover Art Archive
         const caRes = await fetch(`https://coverartarchive.org/release/${releaseId}/front-250`);
         if (!caRes.ok) return null;
 
@@ -625,24 +555,20 @@ async function fetchCoverArt(songName) {
 }
 
 async function updateCoverArt(songName, idx) {
-    // Update cover di player utama
     const playerCover = document.getElementById('player-cover');
     const playerInit  = document.getElementById('player-cover-initial');
     const parsed      = parseSongName(songName);
     const colors      = gradientColors(songName);
 
-    // Set gradient dulu (instant)
     playerCover.style.background = `linear-gradient(135deg,${colors[0]},${colors[1]})`;
     if (playerInit) playerInit.textContent = parsed.artist ? parsed.artist[0].toUpperCase() : songName[0].toUpperCase();
 
-    // Fetch cover art async
     const coverUrl = await fetchCoverArt(songName);
     if (coverUrl) {
         playerCover.style.backgroundImage = `url('${coverUrl}')`;
         playerCover.style.backgroundSize  = 'cover';
         playerCover.style.backgroundPosition = 'center';
 
-        // Update thumb di playlist juga
         const thumb = document.getElementById(`thumb-${idx}`);
         if (thumb) {
             thumb.style.backgroundImage    = `url('${coverUrl}')`;
@@ -652,7 +578,6 @@ async function updateCoverArt(songName, idx) {
             if (initial) initial.style.display = 'none';
         }
 
-        // Update mini player
         const miniCover = document.getElementById('mini-cover');
         if (miniCover) {
             miniCover.style.backgroundImage    = `url('${coverUrl}')`;
@@ -661,7 +586,6 @@ async function updateCoverArt(songName, idx) {
             miniCover.textContent = '';
         }
 
-        // Update notifikasi cover
         updateMediaSessionCover(coverUrl);
     }
 }
@@ -669,19 +593,13 @@ async function updateCoverArt(songName, idx) {
 // ============================================================
 //  SHUFFLE & REPEAT
 // ============================================================
-let shuffleQueue    = []; // lagu yang belum diputar di shuffle saat ini
-let shufflePlayed   = []; // lagu yang sudah diputar di shuffle ini
-
 function rebuildShuffleIdxs() {
-    // Fisher-Yates shuffle — semua lagu masuk queue dulu
     shuffleQueue  = [...Array(playlist.length).keys()];
     shufflePlayed = [];
-    // Keluarkan lagu yang sedang diputar dari queue, taruh di played
     if (currentIdx >= 0) {
         shuffleQueue  = shuffleQueue.filter(i => i !== currentIdx);
         shufflePlayed = [currentIdx];
     }
-    // Shuffle queue
     for (let i = shuffleQueue.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffleQueue[i], shuffleQueue[j]] = [shuffleQueue[j], shuffleQueue[i]];
@@ -696,9 +614,6 @@ function toggleShuffle() {
     if (btn) btn.classList.toggle('ctrl-active', shuffleMode);
 }
 
-// ============================================================
-//  REFRESH PLAYLIST
-// ============================================================
 function refreshPlaylist() {
     location.reload();
 }
@@ -722,12 +637,10 @@ function updateRepeatBtn() {
 
 function getNextIdx() {
     if (shuffleMode) {
-        // Pindahkan currentIdx ke played
         if (!shufflePlayed.includes(currentIdx)) shufflePlayed.push(currentIdx);
         shuffleQueue = shuffleQueue.filter(i => i !== currentIdx);
 
         if (shuffleQueue.length === 0) {
-            // Semua lagu sudah diputar — shuffle ulang dari awal
             rebuildShuffleIdxs();
         }
         return shuffleQueue[0];
@@ -737,7 +650,6 @@ function getNextIdx() {
 
 function getPrevIdx() {
     if (shuffleMode) {
-        // Kembali ke lagu sebelumnya dari history played
         if (shufflePlayed.length > 1) {
             const prev = shufflePlayed[shufflePlayed.length - 2];
             shufflePlayed.pop();
@@ -761,11 +673,10 @@ async function playSong(idx) {
     const player = document.getElementById('audio-player');
     const parsed = parseSongName(file.name.replace(/\.[^.]+$/, ''));
 
-    // Update active track
     document.querySelectorAll('#playlist-ui li.track-active').forEach(li => {
         li.classList.remove('track-active');
         const bar = li.querySelector('.track-icon');
-        if (bar) { bar.innerHTML = '♪'; bar.classList.remove('playing'); }
+        if (bar) { bar.innerHTML = '▶'; bar.classList.remove('playing'); }
     });
 
     const trackEl = document.getElementById(`track-${idx}`);
@@ -777,11 +688,9 @@ async function playSong(idx) {
     const displayName = parsed.title || file.name.replace(/\.[^.]+$/, '');
     songEl.textContent = '⏳ Memuat...';
 
-    // Update player info
     document.getElementById('player-title').textContent  = displayName;
     document.getElementById('player-artist').textContent = parsed.artist || 'ChloroWave';
 
-    // Update mini player info
     const miniTitle  = document.getElementById('mini-title');
     const miniArtist = document.getElementById('mini-artist');
     if (miniTitle)  miniTitle.textContent  = displayName;
@@ -803,13 +712,12 @@ async function playSong(idx) {
         startVisualizer(idx);
         updateMediaSession(displayName, parsed.artist || 'ChloroWave', file.playlistName);
 
-        // Fetch cover art async (tidak block playback)
         updateCoverArt(file.name.replace(/\.[^.]+$/, ''), idx);
 
         if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
 
     } catch (err) {
-        songEl.textContent = '⚠ Gagal memutar: ' + file.name;
+        songEl.textContent = '❌ Gagal memutar: ' + file.name;
     }
 }
 
@@ -825,12 +733,10 @@ function togglePlay() {
 }
 
 function updatePlayBtn(playing) {
-    // Play icons — hide when playing
     ['play-icon','mini-play-icon'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = playing ? 'none' : 'inline-block';
     });
-    // Pause icons — show when playing
     ['pause-icon','mini-pause-icon'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = playing ? 'inline-block' : 'none';
@@ -852,43 +758,47 @@ function formatTime(sec) {
     return `${m}:${s}`;
 }
 
-const _player = document.getElementById('audio-player');
+// Inisialisasi Event Listener Player setelah DOM siap
+window.addEventListener('DOMContentLoaded', () => {
+    const _player = document.getElementById('audio-player');
+    if (!_player) return;
 
-_player.addEventListener('ended', () => {
-    updatePlayBtn(false);
-    if (repeatMode === 'one') {
-        _player.currentTime = 0; _player.play();
-    } else if (repeatMode === 'all') {
-        playSong(getNextIdx());
-    } else {
-        if (currentIdx < playlist.length - 1) playSong(getNextIdx());
-        else { updatePlayBtn(false); }
-    }
-});
-
-_player.addEventListener('pause', () => {
-    updatePlayBtn(false);
-    stopBarAnimation();
-});
-
-_player.addEventListener('play', () => {
-    updatePlayBtn(true);
-    if (currentIdx >= 0) startBarAnimationCSS(currentIdx);
-});
-
-_player.addEventListener('timeupdate', () => {
-    const pct = _player.duration ? (_player.currentTime / _player.duration) * 100 : 0;
-    ['progress-bar', 'mini-progress-bar'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.width = pct + '%';
+    _player.addEventListener('ended', () => {
+        updatePlayBtn(false);
+        if (repeatMode === 'one') {
+            _player.currentTime = 0; _player.play();
+        } else if (repeatMode === 'all') {
+            playSong(getNextIdx());
+        } else {
+            if (currentIdx < playlist.length - 1) playSong(getNextIdx());
+            else { updatePlayBtn(false); }
+        }
     });
-    const cur = document.getElementById('time-current');
-    if (cur) cur.textContent = formatTime(_player.currentTime);
-});
 
-_player.addEventListener('loadedmetadata', () => {
-    const tot = document.getElementById('time-total');
-    if (tot) tot.textContent = formatTime(_player.duration);
+    _player.addEventListener('pause', () => {
+        updatePlayBtn(false);
+        stopBarAnimation();
+    });
+
+    _player.addEventListener('play', () => {
+        updatePlayBtn(true);
+        if (currentIdx >= 0) startBarAnimationCSS(currentIdx);
+    });
+
+    _player.addEventListener('timeupdate', () => {
+        const pct = _player.duration ? (_player.currentTime / _player.duration) * 100 : 0;
+        ['progress-bar', 'mini-progress-bar'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.width = pct + '%';
+        });
+        const cur = document.getElementById('time-current');
+        if (cur) cur.textContent = formatTime(_player.currentTime);
+    });
+
+    _player.addEventListener('loadedmetadata', () => {
+        const tot = document.getElementById('time-total');
+        if (tot) tot.textContent = formatTime(_player.duration);
+    });
 });
 
 // ============================================================
@@ -977,7 +887,7 @@ function startBarAnimationCSS(idx) {
 function stopBarAnimation() {
     document.querySelectorAll('.soundbar').forEach(el => {
         const parent = el.closest('.track-icon');
-        if (parent) { parent.innerHTML = '♪'; parent.classList.remove('playing'); }
+        if (parent) { parent.innerHTML = '▶'; parent.classList.remove('playing'); }
     });
 }
 
