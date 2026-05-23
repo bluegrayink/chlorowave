@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="mfLS75-16VBBP7CixDWnOHiGVjnJYvzcb_xCfykkSA4" />
+    <meta name="google-site-verification" content="qr3BLxiSWRxNZeQZy7u2nuTZxDqCaBmFYatvq0LAr4A" />
     <title>ChloroWave</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" />
@@ -35,12 +35,13 @@
 
             <div class="hero-text">
                 <h2>Musik dari Google Drive<br>kamu, langsung diputar.</h2>
-                <p>Tidak ada iklan. Tidak ada biaya tersembunyi.<br>Bayar sekali untuk Registrasi</p>
+                <p>Tidak ada iklan. Tidak ada biaya tersembunyi.<br>Cukup bayar serelanya untuk aktivasi.</p>
             </div>
 
             <div class="landing-features">
-                <div class="feature-pill">Streaming dari Drive pribadi</div>
-                <div class="feature-pill">Login via Google</div>
+                <div class="feature-pill">🎵 Streaming dari Drive pribadi</div>
+                <div class="feature-pill">🔒 Login aman via Google</div>
+                <div class="feature-pill">📱 Bisa install di HP</div>
             </div>
 
             <div class="landing-actions">
@@ -48,7 +49,7 @@
                 <button class="btn-ghost" onclick="tryLogin()">Sudah punya akun? Login</button>
             </div>
             <button class="btn-link guide-link" onclick="openModal('modal-guide')">
-                Panduan login pertama kali
+                ❓ Panduan login pertama kali
             </button>
 
             <div class="landing-footer">
@@ -62,73 +63,64 @@
     </div>
 
     <!-- ========================
-         SCREEN 2: REGISTRASI
-         Form pendaftaran manual
+         SCREEN 2: REGISTRASI — 1 langkah
     ======================== -->
     <div id="screen-register" class="screen hidden">
         <div class="page-wrap">
-            <button class="btn-back" onclick="showScreen('screen-landing')">? Kembali</button>
+            <button class="btn-back" onclick="showScreen('screen-landing')">← Kembali</button>
 
             <div class="form-header">
-                <div class="step-badge">Langkah 1 dari 2</div>
                 <h2>Aktivasi Akun</h2>
-                <p>Isi data di bawah untuk memulai proses verifikasi. Akun aktif dalam <strong>1×24 jam</strong>.</p>
+                <p>Isi data lalu bayar untuk mengaktifkan akun kamu.</p>
             </div>
 
-            <!-- Step 1: Form isi data -->
-            <div id="reg-step-1">
-                <form id="reg-form" class="reg-form">
-                    <div class="field-group">
-                        <label for="f-email">Email Gmail</label>
-                        <div class="email-input-wrap">
-                            <input type="text" id="f-email" placeholder="namakamu" required
-                                   autocomplete="username" autocapitalize="none" spellcheck="false">
-                            <span class="email-suffix">@gmail.com</span>
-                        </div>
-                        <span class="field-hint">Ini yang akan dipakai untuk login</span>
-                    </div>
-
-                    <div class="field-group">
-                        <label for="f-share">Link Share di Sosmed</label>
-                        <input type="url" id="f-share" placeholder="share postingan link" required>
-                        <span class="field-hint">Share halaman home ChloroWave di social media kalian</span>
-                    </div>
-
-                    <div id="reg-error" class="error-msg hidden"></div>
-
-                    <button type="submit" class="btn-primary full-width" id="reg-submit-btn">
-                        <span id="reg-btn-text">Lanjut ke Pembayaran</span>
-                        <span id="reg-btn-loader" class="btn-loader hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
-                    </button>
-                </form>
+            <div class="payment-card">
+                <div class="payment-card-label">🎉 Harga Spesial — Terbatas!</div>
+                <div class="payment-amount-wrap">
+                    <span class="price-original">Rp 100.000</span>
+                    <span class="price-current">Rp 20.000</span>
+                    <span class="price-badge">HEMAT 80%</span>
+                </div>
+                <div class="payment-methods">
+                    <span class="payment-badge">GoPay</span>
+                    <span class="payment-badge">DANA</span>
+                    <span class="payment-badge">OVO</span>
+                    <span class="payment-badge">ShopeePay</span>
+                    <span class="payment-badge">m-Banking</span>
+                </div>
             </div>
 
-            <!-- Step 2: QR Payment -->
-            <div id="reg-step-2" class="hidden">
-                <div class="qr-step-header">
-                    <div class="step-badge">Langkah 2 dari 2</div>
-                    <h2>Biaya Registrasi</h2>
-                    <p>Sekali bayar untuk selamanya<br>Scan QR code di bawah untuk melakukan pembayaran.</p>
+            <form id="reg-form" class="reg-form">
+                <div class="field-group">
+                    <label for="f-email">Email Gmail</label>
+                    <div class="email-input-wrap">
+                        <input type="text" id="f-email" placeholder="namakamu" required
+                               autocomplete="username" autocapitalize="none" spellcheck="false">
+                        <span class="email-suffix">@gmail.com</span>
+                    </div>
+                    <span class="field-hint">Ini yang akan dipakai untuk login</span>
                 </div>
 
-                <div class="qr-amount-badge">
-                    <i class="fa-solid fa-tag"></i>Rp 100.000
+                <div class="field-group">
+                    <label for="f-share">Link Share di Sosmed</label>
+                    <input type="url" id="f-share" placeholder="https://threads.net/p/..." required>
+                    <span class="field-hint">Share postingan tentang ChloroWave di Threads / IG / Twitter</span>
                 </div>
 
-                <div id="qr-widget-container" class="qr-widget-container">
-                    <!-- Widget Temanqris di-inject via JS -->
-                </div>
+                <div id="reg-error" class="error-msg hidden"></div>
 
-                <div class="qr-note">
-                    <i class="fa-solid fa-circle-info"></i>
-                    Setelah bayar, klik <strong>"Sudah Bayar"</strong> di widget. 
-                    Akun akan diverifikasi tim kami dalam 1×24 jam.
-                </div>
+                <div id="qr-widget-container" class="qr-widget-container"></div>
 
-                <button class="btn-ghost" onclick="backToStep1()" style="width:100%;margin-top:12px">
-                    <i class="fa-solid fa-arrow-left"></i> Kembali
+                <button type="submit" class="btn-primary full-width" id="reg-submit-btn">
+                    <i class="fa-solid fa-qrcode"></i>
+                    <span id="reg-btn-text">Bayar dengan QRIS</span>
                 </button>
-            </div>
+
+                <p class="reg-footer-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Setelah bayar, akun diverifikasi dalam 1×24 jam dan kamu akan menerima email konfirmasi.
+                </p>
+            </form>
         </div>
     </div>
 
@@ -138,7 +130,7 @@
     ======================== -->
     <div id="screen-pending" class="screen hidden">
         <div class="page-wrap centered">
-            <div class="pending-icon">?</div>
+            <div class="pending-icon">⏳</div>
             <h2>Pendaftaran Diterima!</h2>
             <p>Data kamu sedang diverifikasi oleh tim kami.</p>
             <div class="pending-info-card">
@@ -186,6 +178,17 @@
                                 <button class="btn-save-username" onclick="saveUsername()">Simpan</button>
                             </div>
                             <hr>
+                            <div class="menu-item">
+                                <label><i class="fa-solid fa-link"></i> Link Referral Kamu</label>
+                                <div class="ref-code-wrap">
+                                    <span id="ref-code-display" class="ref-code">—</span>
+                                </div>
+                                <button id="copy-ref-btn" class="btn-ref-copy" onclick="copyRefLink()">
+                                    <i class="fa-solid fa-copy"></i> Salin Link
+                                </button>
+                                <p class="ref-hint">Bagikan link ini. Setiap teman yang daftar via linkmu akan tercatat.</p>
+                            </div>
+                            <hr>
                             <button class="logout-btn" onclick="logout()">Logout</button>
                         </div>
                     </div>
@@ -196,7 +199,7 @@
                 <!-- Cover Art + Song Info -->
                 <div class="player-top">
                     <div id="player-cover" class="player-cover">
-                        <span id="player-cover-initial" class="cover-initial">?</span>
+                        <span id="player-cover-initial" class="cover-initial">♪</span>
                     </div>
                     <div class="player-info">
                         <div id="current-song" class="hidden">Pilih lagu...</div>
@@ -253,7 +256,7 @@
     ======================== -->
     <div id="modal-denied" class="modal-overlay hidden">
         <div class="modal-content">
-            <div class="modal-icon">??</div>
+            <div class="modal-icon">🚫</div>
             <h3>Akses Ditolak</h3>
             <p>Email <strong id="denied-email"></strong> belum terdaftar atau masih dalam proses verifikasi.</p>
             <div class="modal-actions">
@@ -269,7 +272,7 @@
             <div id="mini-progress-bar" class="mini-progress-bar"></div>
         </div>
         <div class="mini-content">
-            <div id="mini-cover" class="mini-cover">?</div>
+            <div id="mini-cover" class="mini-cover">♪</div>
             <div class="mini-info">
                 <div id="mini-title" class="mini-title">—</div>
                 <div id="mini-artist" class="mini-artist">ChloroWave</div>
@@ -316,7 +319,7 @@
                         <p>Saat popup Google muncul, pilih akun Gmail yang sudah didaftarkan.</p>
                         <div class="step-img-placeholder">
                             <i class="fa-brands fa-google" style="font-size:1.5rem;color:#4285F4"></i>
-                            <span>Pilih akun ? klik nama/email kamu</span>
+                            <span>Pilih akun → klik nama/email kamu</span>
                         </div>
                     </div>
                 </div>
@@ -327,7 +330,7 @@
                         <p>Di halaman peringatan Google, klik teks <strong>"Advanced"</strong> di pojok kiri bawah.</p>
                         <div class="step-img-placeholder">
                             <i class="fa-solid fa-triangle-exclamation" style="color:#f5a623"></i>
-                            <span>Google hasn't verified this app ? klik <strong>Advanced</strong></span>
+                            <span>Google hasn't verified this app → klik <strong>Advanced</strong></span>
                         </div>
                     </div>
                 </div>
@@ -338,7 +341,7 @@
                         <p>Klik teks yang muncul di bawah, lalu klik <strong>Allow</strong> untuk izinkan akses Drive.</p>
                         <div class="step-img-placeholder">
                             <i class="fa-solid fa-check-circle" style="color:var(--green)"></i>
-                            <span>Go to ChloroWave (unsafe) ? Allow ? <strong>Selesai!</strong></span>
+                            <span>Go to ChloroWave (unsafe) → Allow → <strong>Selesai!</strong></span>
                         </div>
                     </div>
                 </div>
