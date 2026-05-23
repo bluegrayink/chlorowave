@@ -187,7 +187,7 @@ function initTemanqrisWidget(email, shareUrl) {
     div.setAttribute('data-temanqris',       '');
     div.setAttribute('data-merchant',        CONFIG.TEMANQRIS_MERCHANT);
     div.setAttribute('data-amount',          CONFIG.TEMANQRIS_AMOUNT);
-    div.setAttribute('data-button-text',     'Bayar Rp 100.000 dengan QRIS');
+    div.setAttribute('data-button-text',     'Bayar Rp 20.000 dengan QRIS');
     div.setAttribute('data-button-color',    '#1DB954');
     div.setAttribute('data-description',     'ChloroWave-' + email);
     div.setAttribute('data-callback',        callbackUrl);
@@ -305,7 +305,7 @@ function copyRefLink() {
 // ============================================================
 function updateUsernameUI() {
     const name = localStorage.getItem('cw_username') || userEmail?.split('@')[0] || 'User';
-    document.getElementById('username-display').textContent = '?? ' + name;
+    document.getElementById('username-display').textContent = '👤 ' + name;
     // Update ref code display jika menu terbuka
     showRefCode();
 }
@@ -451,7 +451,7 @@ async function fetchSongsFromDrive() {
                     <div class="fnf-desc">Buat folder <code>chlorowave</code> di Google Drive kamu, lalu upload lagu ke dalamnya.</div>
                     <div class="fnf-steps">
                         <div class="fnf-step"><span class="fnf-num">1</span><span>Buka <a href="https://drive.google.com" target="_blank">Google Drive</a></span></div>
-                        <div class="fnf-step"><span class="fnf-num">2</span><span>Klik <strong>+ New</strong> ? <strong>Folder</strong></span></div>
+                        <div class="fnf-step"><span class="fnf-num">2</span><span>Klik <strong>+ New</strong> → <strong>Folder</strong></span></div>
                         <div class="fnf-step"><span class="fnf-num">3</span><span>Beri nama persis: <code>chlorowave</code></span></div>
                         <div class="fnf-step"><span class="fnf-num">4</span><span>Upload lagu ke folder tersebut</span></div>
                         <div class="fnf-step"><span class="fnf-num">5</span><span>Klik tombol <strong>Refresh</strong> di atas</span></div>
@@ -567,7 +567,7 @@ function trackHTML(idx, song) {
                 <span class="track-name">${sanitize(parsed.title || name)}</span>
                 ${parsed.artist ? `<span class="track-artist">${sanitize(parsed.artist)}</span>` : ''}
             </div>
-            <span class="track-icon" id="bar-${idx}">?</span>
+            <span class="track-icon" id="bar-${idx}">♪</span>
         </li>`;
 }
 
@@ -765,7 +765,7 @@ async function playSong(idx) {
     document.querySelectorAll('#playlist-ui li.track-active').forEach(li => {
         li.classList.remove('track-active');
         const bar = li.querySelector('.track-icon');
-        if (bar) { bar.innerHTML = '?'; bar.classList.remove('playing'); }
+        if (bar) { bar.innerHTML = '♪'; bar.classList.remove('playing'); }
     });
 
     const trackEl = document.getElementById(`track-${idx}`);
@@ -775,7 +775,7 @@ async function playSong(idx) {
     }
 
     const displayName = parsed.title || file.name.replace(/\.[^.]+$/, '');
-    songEl.textContent = '? Memuat...';
+    songEl.textContent = '⏳ Memuat...';
 
     // Update player info
     document.getElementById('player-title').textContent  = displayName;
@@ -809,7 +809,7 @@ async function playSong(idx) {
         if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
 
     } catch (err) {
-        songEl.textContent = '? Gagal memutar: ' + file.name;
+        songEl.textContent = '⚠ Gagal memutar: ' + file.name;
     }
 }
 
@@ -977,7 +977,7 @@ function startBarAnimationCSS(idx) {
 function stopBarAnimation() {
     document.querySelectorAll('.soundbar').forEach(el => {
         const parent = el.closest('.track-icon');
-        if (parent) { parent.innerHTML = '?'; parent.classList.remove('playing'); }
+        if (parent) { parent.innerHTML = '♪'; parent.classList.remove('playing'); }
     });
 }
 
